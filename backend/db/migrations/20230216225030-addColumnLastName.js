@@ -7,14 +7,14 @@ if (process.env.NODE_ENV === 'production') {
 }
 module.exports = {
   async up (queryInterface, Sequelize) {
-    await queryInterface.addColumn('Users', "lastName", {
+    await queryInterface.addColumn('users', "lastName", {
       type: Sequelize.STRING,
       allowNull: false,
     },options);
   },
 
   async down (queryInterface, Sequelize) {
-    options.tableName = "Users";
+    options.tableName = "users";
     await queryInterface.removeColumn(options);
   }
 };
