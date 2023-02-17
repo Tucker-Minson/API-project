@@ -29,11 +29,11 @@ module.exports = {
         allowNull: false
       },
       firstName: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(30),
         allowNull: false,
       },
       lastName: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(30),
         allowNull: false,
       },
       createdAt: {
