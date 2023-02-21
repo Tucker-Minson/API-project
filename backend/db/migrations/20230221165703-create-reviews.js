@@ -13,6 +13,13 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
+      userId: {
+        type: Sequelize.INTEGER,
+      },
+      spotId: {
+        type: Sequelize.INTEGER,
+      },
+
       review: {
         type: Sequelize.STRING,
         allowNull: false
