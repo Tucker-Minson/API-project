@@ -6,49 +6,27 @@ if (process.env.NODE_ENV === 'production') {
 }
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Spots', {
+    await queryInterface.createTable('Reviews', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      ownerId: {
-        type: Sequelize.INTEGER,
-        unique: true,
-      },
-      address: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      city: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      state: {
-        type: Sequelize.STRING,
-      },
-      country: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      lat: {
+      userId: {
         type: Sequelize.INTEGER,
       },
-      lng: {
+      spotId: {
         type: Sequelize.INTEGER,
       },
-      name: {
+
+      review: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: false
       },
-      description: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      price: {
+      stars: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: false
       },
       createdAt: {
         allowNull: false,
@@ -59,17 +37,11 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      },
-      avgRating: {
-        type: Sequelize.INTEGER,
-      },
-      previewImage: {
-        type: Sequelize.STRING,
-      },
-    }, options);
+      }
+    },options);
   },
   async down(queryInterface, Sequelize) {
-    options.tableName = "Spots";
+    options.tableName = "Reviews";
     await queryInterface.dropTable(options);
   }
 };
