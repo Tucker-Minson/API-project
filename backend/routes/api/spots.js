@@ -4,7 +4,7 @@ const { setTokenCookie, restoreUser } = require('../../utils/auth');
 const { Spot, User, Image, Review } = require("../../db/models");
 
 const router = express.Router();
-const { check } = require('express-validator');
+const { check, validationResult } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
 
 const validateLogin = [
@@ -21,6 +21,7 @@ const validateLogin = [
 //get all Spots
 router.get("/", async (req, res) => {
     let spots = await Spot.findAll()
+    console.log("Say Hello")
     res.status(200).json(spots)
 })
 
@@ -62,7 +63,9 @@ router.get("/:id", async (req, res) => {
 //get all Spots for current User
 // needs to be by user Id
 router.get("/current", async (req, res) => {
-    const currentUserSpots = await Spot.findByPk( req.params.id)
+    const currentUserSpots = await Spot.findByPk(req.params.id)
+    console.log("This is req.params.id -->", req.params.id)
+    console.log("Say Hello")
     res.status(200).json(currentUserSpots)
 })
 
@@ -73,15 +76,15 @@ router.get("/current", async (req, res) => {
 const spotCheck = (req, res, next) => {
     let errors = []
 
-    if (!req.body.address) error.push("Street address is required")
-    if (!req.body.city) error.push("City is required")
-    if (!req.body.state) error.push("State is required")
-    if (!req.body.country) error.push("Country is required")
-    if (!req.body.lat) error.push("Latitude is not valid")
-    if (!req.body.lng) error.push("Longitude is not valid")
-    if (!req.body.name) error.push("Name must be less than 50 characters")
-    if (!req.body.description) error.push("Description is required")
-    if (!req.body.price) error.push("Price per day is required")
+    if (!req.body.address) errors.push("Street address is required")
+    if (!req.body.city) errors.push("City is required")
+    if (!req.body.state) errors.push("State is required")
+    if (!req.body.country) errors.push("Country is required")
+    if (!req.body.lat) errors.push("Latitude is not valid")
+    if (!req.body.lng) errors.push("Longitude is not valid")
+    if (!req.body.name) errors.push("Name must be less than 50 characters")
+    if (!req.body.description) errors.push("Description is required")
+    if (!req.body.price) errors.push("Price per day is required")
 
     if(errors.length > 0) {
         const err = new Error('Invalid user Input')
@@ -91,7 +94,7 @@ const spotCheck = (req, res, next) => {
     }
     next()
 }
-//create an Image for a Spot
+//create a Spot        //Works          *maybe let the current data be saved when used for edit*
 router.post("/", spotCheck, async (req, res) => {
     const { address, city, state, country, lat, lng, name, description, price} = req.body;
 
@@ -114,36 +117,65 @@ router.post("/", spotCheck, async (req, res) => {
 })
 
 //create an Image for a Spot
-router.post("/:id/images", async (req, res) => {
+router.post("/:id/images",  async (req, res) => {
+    const image = await Spot.findByPk(req.params.id);
+    const { url, preview } = req.body;
 
-    if (error) {
+    const newSpotImage = await image.createImage({
+        url,
+        preview
+    })
 
-        res.status(400).json(error)
+    res.status(200).json(newSpotImage)
+})
+
+//edit a Spot // WORKS
+router.put("/:id", spotCheck, async (req, res) => {
+    const { address, city, state, country, lat, lng, name, description, price} = req.body;
+    let spot = await Spot.findByPk(req.params.id)
+    spot.address = address,
+    spot.city = city,
+    spot.state = state,
+    spot.country = country,
+    spot.lat = lat,
+    spot.lng = lng,
+    spot.name = name,
+    spot.description = description,
+    spot.price = price
+
+    if (!spot) {
+    res.status(404).json({
+        message: "Spot couldn't be found",
+        statusCode: 404
+    })
+    } else if (validationResult === false) {
+        res.status(400).json({
+            message: "This Spot successfully updated",
+            statusCode: 400,
+            errors
+        })
+    } else {
+        await spot.save()
+        res.status(200).json({
+            message: "This Spot successfully updated",
+            spot
+        })
     }
-    res.status(201).json()
-})
-//create a Review for a Spot
-router.post('/:id/reviews', async (req, res) => {
-
-    res.status(201).json()
 })
 
-//edit a Spot
-router.put("/:id", async (req, res) => {
-
-    if (error) {
-        console.log("This is a Vaidation error")
-
-        res.status(400).json(error)
-    } else if (error) {
-        console.log("Spot couldn't be found")
-        res.status(404).json(error)
+// delete a Spot    // WORKS!
+router.delete("/:id", async (req, res) => {
+    let spot = await Spot.findByPk(req.params.id)
+    if (!spot) {
+        res.status(404).json({
+            message: "Spot couldn't be found",
+        })
     }
-    res.status(200).json()
+    await spot.destroy()
+    res.status(200).json({
+        message: "Successfully deleted"
+    })
 })
-
-// delete a Spot
-router.delete("/:id")
 
 
 module.exports = router;
