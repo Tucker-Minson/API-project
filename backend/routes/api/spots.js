@@ -18,7 +18,7 @@ const validateLogin = [
     handleValidationErrors
 ];
 
-//get all Spots
+//get all Spots----------------------------------------
 router.get("/", async (req, res) => {
     let spots = await Spot.findAll()
     console.log("Say Hello")
@@ -70,8 +70,8 @@ router.get("/current", async (req, res) => {
 })
 
 
-
 // middleware checking if a spot exists
+/*maybe let the current data be saved when used for edit*/
 
 const spotCheck = (req, res, next) => {
     let errors = []
@@ -94,12 +94,18 @@ const spotCheck = (req, res, next) => {
     }
     next()
 }
-//create a Spot        //Works          *maybe let the current data be saved when used for edit*
+//create a Spot        //Works
+/*
+-NEEDS:
+    --Authorization
+    --Error
+    --
+ */
 router.post("/", spotCheck, async (req, res) => {
     const { address, city, state, country, lat, lng, name, description, price} = req.body;
 
-    const newSpot = await Spot.create(
-        {address,
+    const newSpot = await Spot.create({
+        address,
         city,
         state,
         country,
@@ -109,14 +115,23 @@ router.post("/", spotCheck, async (req, res) => {
         description,
         price
     })
-    console.log(spotCheck)
-    res.status(200).json({
-        message: "Spot successfully added to the database :)",
-        game: newSpot
-    })
+
+        if (validationResult === false) {
+            res.status(400).json({
+                message: "Validation Error",
+                statusCode: 400,
+                errors
+            })
+        } else {
+            res.status(201).json({
+                message: "Spot successfully added to the database :)",
+                game: newSpot
+            })
+
+        }
 })
 
-//create an Image for a Spot
+//create an Image for a Spot-------------------------------------
 router.post("/:id/images",  async (req, res) => {
     const image = await Spot.findByPk(req.params.id);
     const { url, preview } = req.body;
@@ -129,7 +144,7 @@ router.post("/:id/images",  async (req, res) => {
     res.status(200).json(newSpotImage)
 })
 
-//edit a Spot // WORKS
+//edit a Spot // WORKS--------------------------------------
 router.put("/:id", spotCheck, async (req, res) => {
     const { address, city, state, country, lat, lng, name, description, price} = req.body;
     let spot = await Spot.findByPk(req.params.id)
@@ -163,7 +178,7 @@ router.put("/:id", spotCheck, async (req, res) => {
     }
 })
 
-// delete a Spot    // WORKS!
+// delete a Spot    // WORKS!-------------------------------
 router.delete("/:id", async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
     if (!spot) {
