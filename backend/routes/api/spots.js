@@ -44,9 +44,7 @@ router.get("/:id", async (req, res) => {
 
     spotsList.forEach(spot => {
         spot.Images.forEach(image => {
-            // console.log(image.preview)
             if (image.preview === true) {
-                // console.log(image)
                 spot.preview = image.url
             }
         })
@@ -64,8 +62,6 @@ router.get("/:id", async (req, res) => {
 // needs to be by user Id
 router.get("/current", async (req, res) => {
     const currentUserSpots = await Spot.findByPk(req.params.id)
-    console.log("This is req.params.id -->", req.params.id)
-    console.log("Say Hello")
     res.status(200).json(currentUserSpots)
 })
 
@@ -101,7 +97,7 @@ const spotCheck = (req, res, next) => {
     --Error
     --
  */
-router.post("/", spotCheck, async (req, res) => {
+router.post("/", spotCheck, /*validateLogin,*/ async (req, res) => {
     const { address, city, state, country, lat, lng, name, description, price} = req.body;
 
     const newSpot = await Spot.create({
@@ -124,8 +120,9 @@ router.post("/", spotCheck, async (req, res) => {
             })
         } else {
             res.status(201).json({
-                message: "Spot successfully added to the database :)",
-                game: newSpot
+                message: "SUCCESS!(no message needed delete later)",
+                statusCode: 201,
+                Spot: newSpot
             })
 
         }
@@ -145,7 +142,7 @@ router.post("/:id/images",  async (req, res) => {
 })
 
 //edit a Spot // WORKS--------------------------------------
-router.put("/:id", spotCheck, async (req, res) => {
+router.put("/:id", spotCheck,/*validateLogin,*/ async (req, res) => {
     const { address, city, state, country, lat, lng, name, description, price} = req.body;
     let spot = await Spot.findByPk(req.params.id)
     spot.address = address,
@@ -179,7 +176,7 @@ router.put("/:id", spotCheck, async (req, res) => {
 })
 
 // delete a Spot    // WORKS!-------------------------------
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", /*validateLogin,*/async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
     if (!spot) {
         res.status(404).json({
