@@ -15,12 +15,18 @@ const validateLogin = [
         .withMessage('Please provide a password.'),
     handleValidationErrors
 ];
-
-router.get('/', async (req, res) => {
-
+//GET all Reviews of Current User
+router.get('/current', async (req, res) => {
 })
 
+//Get all Reviews by a Spot's id
 
+//Create a Review for a Spot based on the Spot's id
+
+//Add an Image to a Review based on the Review's id
+
+//Edit a Review
+//Delete a Review
 router.post(
     '/',
     validateLogin,
