@@ -1,5 +1,5 @@
 const express = require('express')
-const { setTokenCookie, restoreUser } = require('../../utils/auth');
+const { setTokenCookie, restoreUser, requireAuth } = require('../../utils/auth');
 
 const { Spot, User, Image, Review } = require("../../db/models");
 
@@ -20,47 +20,18 @@ const validateLogin = [
 
 //get all Spots----------------------------------------
 router.get("/", async (req, res) => {
-    let spots = await Spot.findAll()
-    console.log("Say Hello")
+    const spots = await Spot.findAll()
     res.status(200).json(spots)
 })
 
-//this needs to be worked into findByPk
-//get details of a Spot from an id
+//get details of a Spot from an id---------------------
 router.get("/:id", async (req, res) => {
-    const spots = await Spot.findAll({
-        include: [
-            //get Reviews for each spot
-            { model: Review },
-            //get Images for each spot
-            { model: Image },
-        ]
-    })
-
-    let spotsList = [];
-    spots.forEach(spot => {
-        spotsList.push(spot.toJSON())
-    });
-
-    spotsList.forEach(spot => {
-        spot.Images.forEach(image => {
-            if (image.preview === true) {
-                spot.preview = image.url
-            }
-        })
-        if (!spot.preview) {
-            spot.preview = 'no preview picture found'
-        }
-
-        delete spot.Images
-    })
-
-    res.status(200).json(spotsList)
+    let spot = await Spot.findByPk(req.params.id)
+    res.status(200).json(spot)
 })
 
-//get all Spots for current User
-// needs to be by user Id
-router.get("/current", async (req, res) => {
+//get all Spots for current User //No longer working bc 'current is not a valid int'
+router.get("/current", requireAuth, async (req, res) => {
     const currentUserSpots = await Spot.findByPk(req.params.id)
     res.status(200).json(currentUserSpots)
 })
@@ -91,13 +62,8 @@ const spotCheck = (req, res, next) => {
     next()
 }
 //create a Spot        //Works
-/*
--NEEDS:
-    --Authorization
-    --Error
-    --
- */
-router.post("/", spotCheck, /*validateLogin,*/ async (req, res) => {
+
+router.post("/", spotCheck, requireAuth, async (req, res) => {
     const { address, city, state, country, lat, lng, name, description, price} = req.body;
 
     const newSpot = await Spot.create({
@@ -129,7 +95,7 @@ router.post("/", spotCheck, /*validateLogin,*/ async (req, res) => {
 })
 
 //create an Image for a Spot-------------------------------------
-router.post("/:id/images",  async (req, res) => {
+router.post("/:id/images", requireAuth, async (req, res) => {
     const image = await Spot.findByPk(req.params.id);
     const { url, preview } = req.body;
 
@@ -140,9 +106,23 @@ router.post("/:id/images",  async (req, res) => {
 
     res.status(200).json(newSpotImage)
 })
+//GET all current Bookings by Spot id---------------------------
+router.get('/:id/bookings', async (req, res) => {
 
-//edit a Spot // WORKS--------------------------------------
-router.put("/:id", spotCheck,/*validateLogin,*/ async (req, res) => {
+    res.status(200).json()
+})
+
+//create a Booking based on a Spot id---------------------------
+router.post("/:id/bookings",  async (req, res) => {
+
+    res.status(200).json({
+        /*return id, spotId, Spot:{all the stuffs},userId, start,end */
+    })
+})
+
+
+//edit a Spot // WORKS---------------------------------------
+router.put("/:id", spotCheck, requireAuth, async (req, res) => {
     const { address, city, state, country, lat, lng, name, description, price} = req.body;
     let spot = await Spot.findByPk(req.params.id)
     spot.address = address,
@@ -176,7 +156,7 @@ router.put("/:id", spotCheck,/*validateLogin,*/ async (req, res) => {
 })
 
 // delete a Spot    // WORKS!-------------------------------
-router.delete("/:id", /*validateLogin,*/async (req, res) => {
+router.delete("/:id", requireAuth, async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
     if (!spot) {
         res.status(404).json({
