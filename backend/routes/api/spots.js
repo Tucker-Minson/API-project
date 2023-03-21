@@ -24,7 +24,7 @@ router.get("/", async (req, res) => {
     res.status(200).json(spots)
 })
 
-//get all Spots for current User //No longer working bc 'current is not a valid int'
+//get all Spots for current User 
 router.get("/current", requireAuth, async (req, res) => {
     const { user } = req
     const currentUserSpots = await Spot.findAll({
