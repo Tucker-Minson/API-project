@@ -1,4 +1,4 @@
-const express = require('express')
+const express = require('express');
 const router = express.Router();
 
 const { setTokenCookie, requireAuth } = require('../../utils/auth');
@@ -29,7 +29,6 @@ const validateSignup = [
 
 router.get("/", async (req, res) => {
     const users = await User.findAll()
-
     res.status(200).json(users)
 })
 

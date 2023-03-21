@@ -1,6 +1,6 @@
 const express = require('express')
 const { setTokenCookie, restoreUser } = require('../../utils/auth');
-const { User, Session } = require('../../db/models');
+const { User , Review, Spot } = require('../../db/models');
 const router = express.Router();
 const { check } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
@@ -15,8 +15,28 @@ const validateLogin = [
         .withMessage('Please provide a password.'),
     handleValidationErrors
 ];
+//GET all Reviews of Current User-------------------
+router.get('/current', requireAuth, async (req, res) => {
+    
+    let reviews = await Review.findByPk(req.params.id)
+    res.status().json()
+});
 
+//Add an Image to a Review based on the Review's id-
+router.post("/:id/images", async (req, res) => {
 
+    res.status().json()
+});
+//Edit a Review-------------------------------------
+router.put('/:id', async (req, res) => {
+
+    res.status().json()
+});
+//Delete a Review-----------------------------------
+router.delete('/:id', async (req, res) => {
+
+    res.status().json()
+});
 
 router.post(
     '/',
@@ -42,26 +62,6 @@ router.post(
     }
 );
 
-router.delete(
-    '/',
-    (_req, res) => {
-        res.clearCookie('token');
-        return res.json({ message: 'success' });
-    }
-);
-
-router.get(
-    '/',
-    restoreUser,
-    (req, res) => {
-        const { user } = req;
-        if (user) {
-            return res.json({
-                user: user.toSafeObject()
-            });
-        } else return res.json({ user: null });
-    }
-)
 
 
 module.exports = router;
