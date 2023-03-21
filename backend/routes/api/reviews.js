@@ -17,7 +17,8 @@ const validateLogin = [
 ];
 //GET all Reviews of Current User-------------------
 router.get('/current', requireAuth, async (req, res) => {
-    
+    let {id} = req.params.id
+    console.log("this is ID-->",id)
     let reviews = await Review.findByPk(req.params.id)
     res.status().json()
 });

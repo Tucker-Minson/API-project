@@ -24,17 +24,22 @@ router.get("/", async (req, res) => {
     res.status(200).json(spots)
 })
 
+//get all Spots for current User //No longer working bc 'current is not a valid int'
+router.get("/current", requireAuth, async (req, res) => {
+    const { user } = req
+    const currentUserSpots = await Spot.findAll({
+        where: {
+            ownerId: user.id
+        }
+    })
+    res.status(200).json({"Spots": currentUserSpots})
+})
 //get details of a Spot from an id---------------------
 router.get("/:id", async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
     res.status(200).json(spot)
 })
 
-//get all Spots for current User //No longer working bc 'current is not a valid int'
-router.get("/current", requireAuth, async (req, res) => {
-    const currentUserSpots = await Spot.findByPk(req.params.id)
-    res.status(200).json(currentUserSpots)
-})
 
 
 // middleware checking if a spot exists
