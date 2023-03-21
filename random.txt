@@ -1,4 +1,4 @@
-//findAll 
+//findAll by id with extra stuff
 router.get("/:id", async (req, res) => {
     const spots = await Spot.findAll({
         include: [
