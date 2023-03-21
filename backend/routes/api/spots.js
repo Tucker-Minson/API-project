@@ -1,7 +1,7 @@
 const express = require('express')
 const { setTokenCookie, restoreUser, requireAuth } = require('../../utils/auth');
 
-const { Spot, User, Image, Review } = require("../../db/models");
+const { Spot, User, Image, Review, sequelize} = require("../../db/models");
 
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
@@ -24,7 +24,7 @@ router.get("/", async (req, res) => {
     res.status(200).json(spots)
 })
 
-//get all Spots for current User 
+//get all Spots for current User
 router.get("/current", requireAuth, async (req, res) => {
     const { user } = req
     const currentUserSpots = await Spot.findAll({
@@ -37,7 +37,38 @@ router.get("/current", requireAuth, async (req, res) => {
 //get details of a Spot from an id---------------------
 router.get("/:id", async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
-    res.status(200).json(spot)
+
+    //avgRating
+    let starRatingArr = []
+    let spotJson = spot.toJSON()
+    let spotRating = await Review.findOne({
+        where: {
+            spotId: spot.id
+        },
+        attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']]
+    })
+    let rating = spotRating.dataValues.avgRating
+    if (!rating) {
+        spotJson.avgRating = "No Reviews yet"
+    } else {
+        spotJson.avgRating = rating
+    }
+    starRatingArr.push(spotJson)
+    //previewImage
+    // let spotImages = []
+    // let images = await Image.findAll({
+    //     where: {
+    //         spotId: spot.id
+    //     },
+    //     attributes: [[]]
+    // })
+
+    res.status(200).json({
+        spot: {
+            starRatingArr,
+
+        }
+    })
 })
 
 
