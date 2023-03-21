@@ -103,9 +103,23 @@ router.post("/:id/images", requireAuth, async (req, res) => {
         url,
         preview
     })
-
     res.status(200).json(newSpotImage)
 })
+
+//create a Review based on a Spot id---------------------------
+router.post("/:id/reviews", requireAuth, async (req, res) => {
+
+    res.status(200).json({
+        /*return id, spotId, Spot:{all the stuffs},userId, start,end */
+    })
+})
+
+//GET all current Reviews by Spot id---------------------------
+router.get('/:id/reviews', async (req, res) => {
+
+    res.status(200).json()
+})
+
 //GET all current Bookings by Spot id---------------------------
 router.get('/:id/bookings', async (req, res) => {
 
@@ -119,6 +133,7 @@ router.post("/:id/bookings",  async (req, res) => {
         /*return id, spotId, Spot:{all the stuffs},userId, start,end */
     })
 })
+
 
 
 //edit a Spot // WORKS---------------------------------------
