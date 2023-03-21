@@ -1,0 +1,31 @@
+//findAll 
+router.get("/:id", async (req, res) => {
+    const spots = await Spot.findAll({
+        include: [
+            //get Reviews for each spot
+            { model: Review },
+            //get Images for each spot
+            { model: Image },
+        ]
+    })
+
+    let spotsList = [];
+    spots.forEach(spot => {
+        spotsList.push(spot.toJSON())
+    });
+
+    spotsList.forEach(spot => {
+        spot.Images.forEach(image => {
+            if (image.preview === true) {
+                spot.preview = image.url
+            }
+        })
+        if (!spot.preview) {
+            spot.preview = 'no preview picture found'
+        }
+
+        delete spot.Images
+    })
+
+    res.status(200).json(spotsList)
+})
