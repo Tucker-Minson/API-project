@@ -24,7 +24,7 @@ router.get("/", async (req, res) => {
     res.status(200).json(spots)
 })
 
-//get all Spots for current User
+//get all Spots for current User ----------------------
 router.get("/current", requireAuth, async (req, res) => {
     const { user } = req
     const currentUserSpots = await Spot.findAll({
@@ -35,9 +35,16 @@ router.get("/current", requireAuth, async (req, res) => {
     res.status(200).json({"Spots": currentUserSpots})
 })
 //get details of a Spot from an id---------------------
+// needs: preview image
 router.get("/:id", async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
 
+    if (!spot) {
+        res.status(400).json({
+            message: "Spot couldn't be found",
+            statusCode: 404
+        })
+    }
     //avgRating
     let starRatingArr = []
     let spotJson = spot.toJSON()
@@ -54,19 +61,26 @@ router.get("/:id", async (req, res) => {
         spotJson.avgRating = rating
     }
     starRatingArr.push(spotJson)
-    //previewImage
+
+    // SpotImages WIP
     // let spotImages = []
     // let images = await Image.findAll({
     //     where: {
     //         spotId: spot.id
     //     },
-    //     attributes: [[]]
+    //     attributes: [ 'id','url', 'preview']
     // })
+    // let img = images.dataValues.previewImage
+    // if (!img) {
+    //     spotJson.previewImage = 'no preview picture found'
+    // } else {
+    //     spotJson.previewImage = img
+    // }
+    // spotImages.push(spotJson)
 
     res.status(200).json({
         spot: {
             starRatingArr,
-
         }
     })
 })
@@ -132,13 +146,22 @@ router.post("/", spotCheck, requireAuth, async (req, res) => {
 
 //create an Image for a Spot-------------------------------------
 router.post("/:id/images", requireAuth, async (req, res) => {
-    const image = await Spot.findByPk(req.params.id);
+    const spot = await Spot.findByPk(req.params.id);
     const { url, preview } = req.body;
 
-    const newSpotImage = await image.createImage({
-        url,
-        preview
+
+    const newSpotImage = await spot.createImage({
+        attributes: {
+            url,
+            preview
+        }
     })
+        if (!spot) {
+            res.status(200).json({
+                "message": "Spot couldn't be found",
+                "statusCode": 404
+            })
+        }
     res.status(200).json(newSpotImage)
 })
 
