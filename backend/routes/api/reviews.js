@@ -1,6 +1,8 @@
 const express = require('express')
-const { setTokenCookie, restoreUser } = require('../../utils/auth');
-const { User , Review, Spot } = require('../../db/models');
+const { setTokenCookie, restoreUser, requireAuth } = require('../../utils/auth');
+
+const { User , Review, Spot, Image } = require('../../db/models');
+
 const router = express.Router();
 const { check } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
@@ -17,9 +19,23 @@ const validateLogin = [
 ];
 //GET all Reviews of Current User-------------------
 router.get('/current', requireAuth, async (req, res) => {
-    
-    let reviews = await Review.findByPk(req.params.id)
-    res.status().json()
+    const { user, spot } = req
+    const currentUserReviews = await Review.findAll({
+        where: {
+            userId: user.id,
+        },
+        include: [
+            User, Spot /*needs a ReviewsImage column*/
+        ]
+    })
+    res.status(200).json({
+        Reviews: currentUserReviews
+        // NEEDS:
+            //User: {id, firstname, lastname}
+            // Spots: {all Spot details}
+            // ReviewImages: {id, url}
+    })
+
 });
 
 //Add an Image to a Review based on the Review's id-

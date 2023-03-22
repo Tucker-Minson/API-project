@@ -1,11 +1,12 @@
 const express = require('express')
 const { setTokenCookie, restoreUser, requireAuth } = require('../../utils/auth');
 
-const { Spot, User, Image, Review } = require("../../db/models");
+const { Spot, User, Image, Review, sequelize} = require("../../db/models");
 
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
+const image = require('../../db/models/image');
 
 const validateLogin = [
     check('credential')
@@ -24,17 +25,68 @@ router.get("/", async (req, res) => {
     res.status(200).json(spots)
 })
 
+//get all Spots for current User ----------------------
+router.get("/current", requireAuth, async (req, res) => {
+    const { user } = req
+    const currentUserSpots = await Spot.findAll({
+        where: {
+            ownerId: user.id
+        }
+    })
+    res.status(200).json({"Spots": currentUserSpots})
+})
 //get details of a Spot from an id---------------------
+// needs: preview image
 router.get("/:id", async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
-    res.status(200).json(spot)
+
+    if (!spot) {
+        res.status(400).json({
+            message: "Spot couldn't be found",
+            statusCode: 404
+        })
+    }
+    //avgRating
+    let starRatingArr = []
+    let spotJson = spot.toJSON()
+    let spotRating = await Review.findOne({
+        where: {
+            spotId: spot.id
+        },
+        attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']]
+    })
+    let rating = spotRating.dataValues.avgRating.toFixed(2) //limit decimal to 2 places
+    if (!rating) {
+        spotJson.avgRating = "No Reviews yet"
+    } else {
+        spotJson.avgRating = rating
+    }
+    console.log("trying to get average rating num isolated", spotJson.avgRating)
+    starRatingArr.push(spotJson)
+
+    // SpotImages WIP
+    // let spotImages = []
+    // let images = await Image.findAll({
+    //     where: {
+    //         spotId: spot.id
+    //     },
+    //     attributes: [ 'id','url', 'preview']
+    // })
+    // let img = images.dataValues.previewImage
+    // if (!img) {
+    //     spotJson.previewImage = 'no preview picture found'
+    // } else {
+    //     spotJson.previewImage = img
+    // }
+    // spotImages.push(spotJson)
+
+    res.status(200).json({
+        spot: {
+            starRatingArr,
+        }
+    })
 })
 
-//get all Spots for current User //No longer working bc 'current is not a valid int'
-router.get("/current", requireAuth, async (req, res) => {
-    const currentUserSpots = await Spot.findByPk(req.params.id)
-    res.status(200).json(currentUserSpots)
-})
 
 
 // middleware checking if a spot exists
@@ -93,22 +145,41 @@ router.post("/", spotCheck, requireAuth, async (req, res) => {
 
         }
 })
+router.get("/:id/images",  async (req, res) => {
+    const images = await Image.findAll()
+    res.status(200).json(images)
+})
 
-//create an Image for a Spot-------------------------------------
+//create an Image for a Spot----------------DONE---------------------
 router.post("/:id/images", requireAuth, async (req, res) => {
-    const image = await Spot.findByPk(req.params.id);
-    const { url, preview } = req.body;
 
-    const newSpotImage = await image.createImage({
-        url,
-        preview
+    const spot = await Spot.findByPk(req.params.id);
+    const { user } = req
+    if (spot.ownerId !== user.id) {
+        res.json({
+            message: "Validation error",
+            statusCode: 400,
+        })
+    }
+    if (spot === null) {
+        res.status(200).json({
+            "message": "Spot couldn't be found",
+            "statusCode": 404
+        })
+    }
+    const { url, preview } = req.body;
+    console.log("another console log for spot---->", spot)
+    const image = await spot.createImage({
+        url, preview
     })
-    res.status(200).json(newSpotImage)
+
+
+    res.status(200).json({spot: image})
 })
 
 //create a Review based on a Spot id---------------------------
 router.post("/:id/reviews", requireAuth, async (req, res) => {
-
+    
     res.status(200).json({
         /*return id, spotId, Spot:{all the stuffs},userId, start,end */
     })
