@@ -6,6 +6,7 @@ const { Spot, User, Image, Review, sequelize} = require("../../db/models");
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
+const image = require('../../db/models/image');
 
 const validateLogin = [
     check('credential')
@@ -54,12 +55,13 @@ router.get("/:id", async (req, res) => {
         },
         attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']]
     })
-    let rating = spotRating.dataValues.avgRating
+    let rating = spotRating.dataValues.avgRating.toFixed(2) //limit decimal to 2 places
     if (!rating) {
         spotJson.avgRating = "No Reviews yet"
     } else {
         spotJson.avgRating = rating
     }
+    console.log("trying to get average rating num isolated", spotJson.avgRating)
     starRatingArr.push(spotJson)
 
     // SpotImages WIP
@@ -143,26 +145,36 @@ router.post("/", spotCheck, requireAuth, async (req, res) => {
 
         }
 })
+router.get("/:id/images",  async (req, res) => {
+    const images = await Image.findAll()
+    res.status(200).json(images)
+})
 
-//create an Image for a Spot-------------------------------------
+//create an Image for a Spot----------------DONE---------------------
 router.post("/:id/images", requireAuth, async (req, res) => {
+
     const spot = await Spot.findByPk(req.params.id);
+    const { user } = req
+    if (spot.ownerId !== user.id) {
+        res.json({
+            message: "Validation error",
+            statusCode: 400,
+        })
+    }
+    if (spot === null) {
+        res.status(200).json({
+            "message": "Spot couldn't be found",
+            "statusCode": 404
+        })
+    }
     const { url, preview } = req.body;
-
-
-    const newSpotImage = await spot.createImage({
-        attributes: {
-            url,
-            preview
-        }
+    console.log("another console log for spot---->", spot)
+    const image = await spot.createImage({
+        url, preview
     })
-        if (!spot) {
-            res.status(200).json({
-                "message": "Spot couldn't be found",
-                "statusCode": 404
-            })
-        }
-    res.status(200).json(newSpotImage)
+
+
+    res.status(200).json({spot: image})
 })
 
 //create a Review based on a Spot id---------------------------
