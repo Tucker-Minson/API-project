@@ -179,7 +179,7 @@ router.post("/:id/images", requireAuth, async (req, res) => {
 
 //create a Review based on a Spot id---------------------------
 router.post("/:id/reviews", requireAuth, async (req, res) => {
-
+    
     res.status(200).json({
         /*return id, spotId, Spot:{all the stuffs},userId, start,end */
     })
