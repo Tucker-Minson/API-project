@@ -181,17 +181,44 @@ router.post("/:id/images", requireAuth, async (req, res) => {
 
 //create a Review based on a Spot id---------------------------
 router.post("/:id/reviews", requireAuth, async (req, res) => {
+    const spot = await Spot.findByPk(req.params.id)
+    const { user } = req
+    if (spot.ownerId === user.id) {
+        res.json({
+            message: "Cannot review own your own spot",
+            statusCode: 400,
+        })
+    }
+    if (spot === null) {
+        res.status(200).json({
+            "message": "Spot couldn't be found",
+            "statusCode": 404
+        })
+    }
+    const { spotId, review, stars} = req.body
+    let errors = [];
+    if (!req.body.review) errors.push("Review text is required")
+    if (!req.body.stars) errors.push("Stars must be an integer from 1 to 5")
+    if (errors.length) {
+        res.status(400).json({
+            message: "Validation error",
+            statusCode: 400,
+            errors
+        })
+    }
+    const reviews = await spot.createReview({
+        userId: user.id,
+        spotId, review, stars
+    })
+
 
     res.status(200).json({
+        reviews
         /*return id, spotId, Spot:{all the stuffs},userId, start,end */
     })
 })
 
-//GET all current Reviews by Spot id---------------------------
-router.get('/:id/reviews', async (req, res) => {
 
-    res.status(200).json()
-})
 
 //GET all current Bookings by Spot id---------------------------
 router.get('/:id/bookings', async (req, res) => {
