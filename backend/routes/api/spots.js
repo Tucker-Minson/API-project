@@ -94,11 +94,7 @@ router.get("/:id/reviews", async (req, res) => {
     const reviews = await Review.findAll({
         where: {spotId: spot.id},
         include: {model: User, attributes: ['id','firstName','lastName']}
-
-
     })
-    // const users = await Review.findByPk(req.params.id)
-
     let reviewImages = await reviews.reduce(async (accum, review) => {
         const images = await Image.findAll({
             attributes: ['id', 'url'],

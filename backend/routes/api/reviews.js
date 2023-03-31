@@ -10,13 +10,16 @@ const { handleValidationErrors } = require('../../utils/validation');
 
 //GET all Reviews of Current User-------------------
 router.get('/current', requireAuth, async (req, res) => {
-    const { user, spot } = req
+    const { user } = req
     const currentUserReviews = await Review.findAll({
         where: {
             userId: user.id,
         },
         include: [
-            User, Spot /*needs a ReviewsImage column*/
+            {model: User,
+            attributes: ['id','firstName','lastName']
+            }
+            , Spot /*needs a ReviewsImage column*/
         ]
     })
     res.status(200).json({
@@ -33,6 +36,7 @@ router.get('/current', requireAuth, async (req, res) => {
 //Need to add reviewId to images table so it can be tracked
 
 router.post("/:id/images", requireAuth, async (req, res) => {
+
     const review = await Review.findByPk(req.params.id)
     const spot = await Spot.findByPk(review.spotId)
     const { url, preview } = req.body
@@ -42,9 +46,29 @@ router.post("/:id/images", requireAuth, async (req, res) => {
     res.status(200).json(newReviewImage)
 });
 //Edit a Review-------------------------------------
-router.put('/:id', async (req, res) => {
+//errors not working properly> its an issue with line 54 & 55
+router.put('/:id', requireAuth, async (req, res) => {
+    const { user } = req
+    const { review, stars } = req.body;
+    const reviews = await Review.findByPk(req.params.id)
+    reviews.review = review,
+    reviews.stars = stars
+    console.log("This is a console log for reviews", reviews)
+    if (!reviews) {
+        res.status(404).json({
+            message: "Review couldn't be found",
+            statusCode: 404
+        })
+    }
+    if (reviews.userId !== user.id) {
+        res.json({
+            message: "Validation error",
+            statusCode: 400,
+        })
+    }
 
-    res.status().json()
+    await reviews.save()
+    res.status(200).json(reviews)
 });
 //Delete a Review-----------------------------------
 router.delete('/:id', async (req, res) => {
