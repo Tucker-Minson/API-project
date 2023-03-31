@@ -37,7 +37,7 @@ router.post("/:id/images", requireAuth, async (req, res) => {
     const spot = await Spot.findByPk(review.spotId)
     const { url, preview } = req.body
     const newReviewImage = await spot.createImage({
-        url, spotId: review.spotId
+        url, spotId: review.spotId, reviewId: +req.params.id
     })
     res.status(200).json(newReviewImage)
 });
