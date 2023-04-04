@@ -95,13 +95,13 @@ router.get("/:id/reviews", async (req, res) => {
         where: {spotId: spot.id},
         include: {model: User, attributes: ['id','firstName','lastName']}
     })
-    let reviewImages = await reviews.reduce(async (accum, review) => {
-        const images = await Image.findAll({
-            attributes: ['id', 'url'],
-            where: {reviewId: review.id},
-        })
-        return [...accum, ...images]
-    }, [])
+    // let reviewImages = await reviews.reduce(async (accum, review) => {
+    //     const images = await Image.findAll({
+    //         attributes: ['id', 'url'],
+    //         where: {reviewId: review.id},
+    //     })
+    //     return [...accum, ...images]
+    // }, [])
 
     if (!spot) {
         res.status(400).json({
@@ -111,7 +111,7 @@ router.get("/:id/reviews", async (req, res) => {
     }
     res.status(200).json({
         Reviews: reviews,
-        ReviewImages: reviewImages,
+        // ReviewImages: reviewImages,
     })
 })
 

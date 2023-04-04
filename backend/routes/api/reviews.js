@@ -38,11 +38,24 @@ router.get('/current', requireAuth, async (req, res) => {
 router.post("/:id/images", requireAuth, async (req, res) => {
 
     const review = await Review.findByPk(req.params.id)
+    if (!review) {
+        res.status(404).json({
+            message: "Review couldn't be found",
+            statusCode: 404
+    })
+    }
     const spot = await Spot.findByPk(review.spotId)
     const { url, preview } = req.body
+
     const newReviewImage = await spot.createImage({
         url, spotId: review.spotId, reviewId: +req.params.id
     })
+    if (Number(newReviewImage) >= 10) {
+        res.status(403).json({
+            message: "Maximum number of images for this resource was reached",
+            statusCode: 403
+        })
+    }
     res.status(200).json(newReviewImage)
 });
 //Edit a Review-------------------------------------
