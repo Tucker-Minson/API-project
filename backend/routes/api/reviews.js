@@ -60,25 +60,35 @@ router.post("/:id/images", requireAuth, async (req, res) => {
 });
 //Edit a Review-------------------------------------
 //errors not working properly> its an issue with line 54 & 55
-router.put('/:id', requireAuth, async (req, res) => {
+router.put('/:id', requireAuth, async (req, res, next) => {
     const { user } = req
     const { review, stars } = req.body;
+    let errors = [];
     const reviews = await Review.findByPk(req.params.id)
     reviews.review = review,
     reviews.stars = stars
-    console.log("This is a console log for reviews", reviews)
-    if (!reviews) {
-        res.status(404).json({
-            message: "Review couldn't be found",
-            statusCode: 404
-        })
-    }
+
+    // if (req.body.review === null ) {     //not currently working
+    //     res.status(404).json({
+    //         message: "Spot couldn't be found",
+    //         statusCode: 404
+    //     })
+    // }
     if (reviews.userId !== user.id) {
         res.json({
             message: "Validation error",
             statusCode: 400,
         })
     }
+    if(!req.body.review) errors.push("Review text is required")
+    if(req.body.stars < 1 || req.body.stars > 5) errors.push("Stars must be an integer from 1 to 5")
+    if (errors.length > 0) {
+        const err = new Error ("Validation error")
+        err.statusCode = 400
+        err.errors = errors
+        return next(err)
+    }
+    next()
 
     await reviews.save()
     res.status(200).json(reviews)
