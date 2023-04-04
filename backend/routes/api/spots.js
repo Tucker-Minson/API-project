@@ -55,11 +55,11 @@ router.get("/:id", async (req, res) => {
         },
         attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']]
     })
-    let rating = spotRating.dataValues.avgRating.toFixed(2) //limit decimal to 2 places
+    let rating = spotRating.dataValues.avgRating
     if (!rating) {
         spotJson.avgRating = "No Reviews yet"
     } else {
-        spotJson.avgRating = rating
+        spotJson.avgRating = rating.toFixed(2)
     }
     console.log("trying to get average rating num isolated", spotJson.avgRating)
     starRatingArr.push(spotJson)
@@ -267,6 +267,13 @@ router.post("/:id/bookings",  async (req, res) => {
 router.put("/:id", spotCheck, requireAuth, async (req, res) => {
     const { address, city, state, country, lat, lng, name, description, price} = req.body;
     let spot = await Spot.findByPk(req.params.id)
+    const { user } = req
+    if (spot.ownerId !== user.id) {
+        res.json({
+            message: "Validation error",
+            statusCode: 400,
+        })
+    }
     spot.address = address,
     spot.city = city,
     spot.state = state,
@@ -300,6 +307,13 @@ router.put("/:id", spotCheck, requireAuth, async (req, res) => {
 // delete a Spot    // WORKS!-------------------------------
 router.delete("/:id", requireAuth, async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
+    const { user } = req
+    if (spot.ownerId !== user.id) {
+        res.json({
+            message: "Validation error",
+            statusCode: 400,
+        })
+    }
     if (!spot) {
         res.status(404).json({
             message: "Spot couldn't be found",
