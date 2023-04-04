@@ -87,6 +87,33 @@ router.get("/:id", async (req, res) => {
     })
 })
 
+//Get Reviews by Spot Id---------------------------
+router.get("/:id/reviews", async (req, res) => {
+
+    let spot = await Spot.findByPk(req.params.id)
+    const reviews = await Review.findAll({
+        where: {spotId: spot.id},
+        include: {model: User, attributes: ['id','firstName','lastName']}
+    })
+    // let reviewImages = await reviews.reduce(async (accum, review) => {
+    //     const images = await Image.findAll({
+    //         attributes: ['id', 'url'],
+    //         where: {reviewId: review.id},
+    //     })
+    //     return [...accum, ...images]
+    // }, [])
+
+    if (!spot) {
+        res.status(400).json({
+            message: "Spot couldn't be found",
+            statusCode: 404
+        })
+    }
+    res.status(200).json({
+        Reviews: reviews,
+        // ReviewImages: reviewImages,
+    })
+})
 
 
 // middleware checking if a spot exists

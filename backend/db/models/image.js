@@ -12,12 +12,16 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Image.belongsTo(models.Spot, {foreignKey: "spotId"})
+      Image.belongsTo(models.Review, {foreignKey: "reviewId"})
     }
   }
   Image.init({
     spotId: {
       type:DataTypes.INTEGER,
       allowNull:false,
+    },
+    reviewId: {
+      type: DataTypes.INTEGER,
     },
     url: {
       type: DataTypes.STRING
