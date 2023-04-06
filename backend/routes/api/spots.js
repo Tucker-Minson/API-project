@@ -1,12 +1,13 @@
 const express = require('express')
 const { setTokenCookie, restoreUser, requireAuth } = require('../../utils/auth');
 
-const { Spot, User, Image, Review, sequelize} = require("../../db/models");
+const { Spot, User, Image, Review, Booking, sequelize} = require("../../db/models");
 
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
 const image = require('../../db/models/image');
+
 
 const validateLogin = [
     check('credential')
@@ -55,11 +56,11 @@ router.get("/:id", async (req, res) => {
         },
         attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']]
     })
-    let rating = spotRating.dataValues.avgRating.toFixed(2) //limit decimal to 2 places
+    let rating = spotRating.dataValues.avgRating
     if (!rating) {
         spotJson.avgRating = "No Reviews yet"
     } else {
-        spotJson.avgRating = rating
+        spotJson.avgRating = rating.toFixed(2)
     }
     console.log("trying to get average rating num isolated", spotJson.avgRating)
     starRatingArr.push(spotJson)
@@ -248,9 +249,30 @@ router.post("/:id/reviews", requireAuth, async (req, res) => {
 
 
 //GET all current Bookings by Spot id---------------------------
-router.get('/:id/bookings', async (req, res) => {
+router.get('/:id/bookings', requireAuth, async (req, res) => {
+    let spot = await Spot.findByPk(req.params.id)
+    const { user } = req
+    if (!spot) {
+        res.json({
+            message: "Spot couldn't be found",
+            statusCode: 404
+        })
+    }
+    if (spot.ownerId !== user.id) {
+        const bookings = await Booking.findAll({
+            where: {spotId: spot.id},
+            attributes: ['spotId', 'startDate', 'endDate']
+        })
+        res.status(200).json(bookings)
+    }
 
-    res.status(200).json()
+    if (spot.ownerId === user.id) {
+        const bookings = await Booking.findAll({
+            where: {spotId: spot.id},
+            include: {model: User, attributes: ['id','firstName','lastName']},
+        })
+        res.status(200).json(bookings)
+    }
 })
 
 //create a Booking based on a Spot id---------------------------
@@ -267,6 +289,13 @@ router.post("/:id/bookings",  async (req, res) => {
 router.put("/:id", spotCheck, requireAuth, async (req, res) => {
     const { address, city, state, country, lat, lng, name, description, price} = req.body;
     let spot = await Spot.findByPk(req.params.id)
+    const { user } = req
+    if (spot.ownerId !== user.id) {
+        res.json({
+            message: "Validation error",
+            statusCode: 400,
+        })
+    }
     spot.address = address,
     spot.city = city,
     spot.state = state,
@@ -300,6 +329,13 @@ router.put("/:id", spotCheck, requireAuth, async (req, res) => {
 // delete a Spot    // WORKS!-------------------------------
 router.delete("/:id", requireAuth, async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
+    const { user } = req
+    if (spot.ownerId !== user.id) {
+        res.json({
+            message: "Validation error",
+            statusCode: 400,
+        })
+    }
     if (!spot) {
         res.status(404).json({
             message: "Spot couldn't be found",
