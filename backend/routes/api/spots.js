@@ -1,12 +1,14 @@
 const express = require('express')
 const { setTokenCookie, restoreUser, requireAuth } = require('../../utils/auth');
 
-const { Spot, User, Image, Review, Booking, sequelize} = require("../../db/models");
+const { Spot, User, Image, Review, Booking} = require("../../db/models");
 
+const sequelize = require('sequelize')
+const Op = sequelize.Op
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
-const image = require('../../db/models/image');
+
 
 
 const validateLogin = [
@@ -210,6 +212,12 @@ router.post("/:id/images", requireAuth, async (req, res) => {
 //create a Review based on a Spot id---------------------------
 router.post("/:id/reviews", requireAuth, async (req, res) => {
     const spot = await Spot.findByPk(req.params.id)
+    if (!spot) {
+        res.status(200).json({
+            message: "Spot couldn't be found",
+            statusCode: 404
+        })
+    }
     const { user } = req
     if (spot.ownerId === user.id) {
         res.json({
@@ -217,16 +225,11 @@ router.post("/:id/reviews", requireAuth, async (req, res) => {
             statusCode: 400,
         })
     }
-    if (spot === null) {
-        res.status(200).json({
-            "message": "Spot couldn't be found",
-            "statusCode": 404
-        })
-    }
+
     const { spotId, review, stars} = req.body
     let errors = [];
-    if (!req.body.review) errors.push("Review text is required")
-    if (!req.body.stars) errors.push("Stars must be an integer from 1 to 5")
+    if (!review) errors.push("Review text is required")
+    if (!stars) errors.push("Stars must be an integer from 1 to 5")
     if (errors.length) {
         res.status(400).json({
             message: "Validation error",
@@ -271,15 +274,53 @@ router.get('/:id/bookings', requireAuth, async (req, res) => {
             where: {spotId: spot.id},
             include: {model: User, attributes: ['id','firstName','lastName']},
         })
+
         res.status(200).json(bookings)
     }
 })
 
 //create a Booking based on a Spot id---------------------------
-router.post("/:id/bookings",  async (req, res) => {
+router.post("/:id/bookings", requireAuth,  async (req, res) => {
+    let spot = await Spot.findByPk(req.params.id)
+    const {userId, spotId, startDate, endDate} = req.body
+    let overlappingDates = await Booking.findAll({
+        where: {[Op.and] : sequelize.literal(`(startDate, endDate) OVERLAPS ('${startDate}', '${endDate}')`)}
 
+    })
+    console.log('over lapping dates', overlappingDates)
+    if (!spot) {
+        res.status(200).json({
+            message: "Spot couldn't be found",
+            statusCode: 404
+        })
+    }
+    const { user } = req
+    if (spot.ownerId === user.id) {
+        res.json({
+            message: "Cannot book own your own spot",
+            statusCode: 400,
+        })
+    }
+
+
+    let errors = [];
+    if (new Date(startDate) >= new Date(endDate) ) errors.push("endDate cannot be on or before startDate")
+    //need err for checking overlapping dates of other users.
+
+    if (errors.length) {
+        res.status(400).json({
+            message: "Validation error",
+            statusCode: 400,
+            errors
+        })
+    }
+    const booking = await spot.createBooking({
+        userId: user.id,
+        spotId, startDate, endDate
+    })
     res.status(200).json({
-        /*return id, spotId, Spot:{all the stuffs},userId, start,end */
+        message: "The Booking was successful",
+        booking
     })
 })
 
