@@ -248,7 +248,7 @@ router.post("/:id/reviews", requireAuth, async (req, res) => {
 
 
 //GET all current Bookings by Spot id---------------------------
-router.get('/:id/bookings', async (req, res) => {
+router.get('/:id/bookings',requireAuth, async (req, res) => {
 
     res.status(200).json()
 })
