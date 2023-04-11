@@ -24,8 +24,42 @@ const validateLogin = [
 
 //get all Spots----------------------------------------
 router.get("/", async (req, res) => {
-    const spots = await Spot.findAll()
-    res.status(200).json(spots)
+    let errorResult = { errors: [], }
+    let {page, size, lat, lng} = req.query
+    let query = {
+        where: {},
+        include: []
+    }
+
+    if (page <= 1) page = 1;
+    if (size <= 1) size = 20;
+    if (page || size) {
+        query.limit = size ? size : 20
+        query.offset = page ? page * (page - 1) : 0
+    }
+
+    if (req.query.page < 0) errorResult.errors.push("Page must be greater than or equal to 0")
+    if (req.query.size < 0 ) errorResult.errors.push("Size must be greater than or equal to 0")
+    if (req.query.lat < -90) errorResult.errors.push("Minimum latitude is invalid")
+    if (req.query.lat > 90) errorResult.errors.push("Maximum latitude is invalid")
+    if (req.query.lng < -180) errorResult.errors.push("Minimum longitude is invalid")
+    if (req.query.lng > 180) errorResult.errors.push("Maximum longitude is invalid")
+    if (req.query.price < 0) errorResult.errors.push("Price must be greater than or equal to 0")
+
+    //error handling
+    if (errorResult.errors.length > 0) {
+        res.status(400).json({
+            message: "Validation Error",
+            statusCode: 400,
+            errors: errorResult.errors
+        })
+    }
+        const spots = await Spot.findAll({
+            ...query
+        })
+        res.status(200).json(spots)
+
+
 })
 
 //get all Spots for current User ----------------------
