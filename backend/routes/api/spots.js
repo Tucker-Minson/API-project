@@ -1,5 +1,5 @@
 const express = require('express')
-const { setTokenCookie, restoreUser, requireAuth } = require('../../utils/auth');
+const { requireAuth } = require('../../utils/auth');
 
 const { Spot, User, Image, Review, Booking} = require("../../db/models");
 
@@ -11,16 +11,6 @@ const { handleValidationErrors } = require('../../utils/validation');
 
 
 
-const validateLogin = [
-    check('credential')
-        .exists({ checkFalsy: true })
-        .notEmpty()
-        .withMessage('Please provide a valid email or username.'),
-    check('password')
-        .exists({ checkFalsy: true })
-        .withMessage('Please provide a password.'),
-    handleValidationErrors
-];
 
 //get all Spots----------------------------------------
 router.get("/", async (req, res) => {
@@ -35,18 +25,28 @@ router.get("/", async (req, res) => {
         include: []
     }
 
-    if (Number.isNaN(page) || page <= 1) page = 1;
-    if (Number.isNaN(size) || size <= 1) size = 20;
+    if (Number.isNaN(page) || page === '') page = 1;
+    if (Number.isNaN(size) || size === '') size = 20;
     if (page > 10) page = 10;
     if (size > 20) size = 20;
 
     //error handling
-    if (req.query.page < 0) errorResult.errors.push("Page must be greater than or equal to 0")
+    if (page < 0) errorResult.errors.push("Page must be greater than or equal to 0")
     if (req.query.size < 0 ) errorResult.errors.push("Size must be greater than or equal to 0")
-    if (req.query.lat < -90) errorResult.errors.push("Minimum latitude is invalid")
-    if (req.query.lat > 90) errorResult.errors.push("Maximum latitude is invalid")
-    if (req.query.lng < -180) errorResult.errors.push("Minimum longitude is invalid")
-    if (req.query.lng > 180) errorResult.errors.push("Maximum longitude is invalid")
+    if (req.query.lat) {
+        if (req.query.lat < -90) errorResult.errors.push("Minimum latitude is invalid")
+        if (req.query.lat > 90) errorResult.errors.push("Maximum latitude is invalid")
+        query.where.lat = {
+            [Op.substring]: lat
+        }
+    }
+    if (req.query.lng) {
+        if (req.query.lng < -180) errorResult.errors.push("Minimum longitude is invalid")
+        if (req.query.lng > 180) errorResult.errors.push("Maximum longitude is invalid")
+        query.where.lat = {
+            [Op.substring]: lng
+        }
+    }
     if (req.query.price < 0) errorResult.errors.push("Price must be greater than or equal to 0")
 
     if (errorResult.errors.length > 0) {
