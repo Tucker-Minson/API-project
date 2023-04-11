@@ -25,19 +25,22 @@ const validateLogin = [
 //get all Spots----------------------------------------
 router.get("/", async (req, res) => {
     let errorResult = { errors: [], }
-    let {page, size, lat, lng} = req.query
+    let {page, size, lat, lng, price} = req.query
+
+    page = parseInt(page);
+    size = parseInt(size);
+
     let query = {
         where: {},
         include: []
     }
 
-    if (page <= 1) page = 1;
-    if (size <= 1) size = 20;
-    if (page || size) {
-        query.limit = size ? size : 20
-        query.offset = page ? page * (page - 1) : 0
-    }
+    if (Number.isNaN(page) || page <= 1) page = 1;
+    if (Number.isNaN(size) || size <= 1) size = 20;
+    if (page > 10) page = 10;
+    if (size > 20) size = 20;
 
+    //error handling
     if (req.query.page < 0) errorResult.errors.push("Page must be greater than or equal to 0")
     if (req.query.size < 0 ) errorResult.errors.push("Size must be greater than or equal to 0")
     if (req.query.lat < -90) errorResult.errors.push("Minimum latitude is invalid")
@@ -46,7 +49,6 @@ router.get("/", async (req, res) => {
     if (req.query.lng > 180) errorResult.errors.push("Maximum longitude is invalid")
     if (req.query.price < 0) errorResult.errors.push("Price must be greater than or equal to 0")
 
-    //error handling
     if (errorResult.errors.length > 0) {
         res.status(400).json({
             message: "Validation Error",
@@ -54,10 +56,20 @@ router.get("/", async (req, res) => {
             errors: errorResult.errors
         })
     }
+
+    // queries
+
         const spots = await Spot.findAll({
-            ...query
+            ...query,
+            limit: size,
+            offset: (page - 1) * size
+
         })
-        res.status(200).json(spots)
+        return res.status(200).json({
+            spots,
+            page,
+            size
+        })
 
 
 })
