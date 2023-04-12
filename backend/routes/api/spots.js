@@ -1,29 +1,77 @@
 const express = require('express')
-const { setTokenCookie, restoreUser, requireAuth } = require('../../utils/auth');
+const { requireAuth } = require('../../utils/auth');
 
-const { Spot, User, Image, Review, Booking, sequelize} = require("../../db/models");
+const { Spot, User, Image, Review, Booking} = require("../../db/models");
 
+const sequelize = require('sequelize')
+const Op = sequelize.Op
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
-const image = require('../../db/models/image');
 
 
-const validateLogin = [
-    check('credential')
-        .exists({ checkFalsy: true })
-        .notEmpty()
-        .withMessage('Please provide a valid email or username.'),
-    check('password')
-        .exists({ checkFalsy: true })
-        .withMessage('Please provide a password.'),
-    handleValidationErrors
-];
+
 
 //get all Spots----------------------------------------
 router.get("/", async (req, res) => {
-    const spots = await Spot.findAll()
-    res.status(200).json(spots)
+    let errorResult = { errors: [], }
+    let {page, size, lat, lng, price} = req.query
+
+    page = parseInt(page);
+    size = parseInt(size);
+
+    let query = {
+        where: {},
+        include: []
+    }
+
+    if (Number.isNaN(page) || page === '') page = 1;
+    if (Number.isNaN(size) || size === '') size = 20;
+    if (page > 10) page = 10;
+    if (size > 20) size = 20;
+
+    //error handling
+    if (page < 0) errorResult.errors.push("Page must be greater than or equal to 0")
+    if (req.query.size < 0 ) errorResult.errors.push("Size must be greater than or equal to 0")
+    if (req.query.lat) {
+        if (req.query.lat < -90) errorResult.errors.push("Minimum latitude is invalid")
+        if (req.query.lat > 90) errorResult.errors.push("Maximum latitude is invalid")
+        query.where.lat = {
+            [Op.substring]: lat
+        }
+    }
+    if (req.query.lng) {
+        if (req.query.lng < -180) errorResult.errors.push("Minimum longitude is invalid")
+        if (req.query.lng > 180) errorResult.errors.push("Maximum longitude is invalid")
+        query.where.lat = {
+            [Op.substring]: lng
+        }
+    }
+    if (req.query.price < 0) errorResult.errors.push("Price must be greater than or equal to 0")
+
+    if (errorResult.errors.length > 0) {
+        res.status(400).json({
+            message: "Validation Error",
+            statusCode: 400,
+            errors: errorResult.errors
+        })
+    }
+
+    // queries
+
+        const spots = await Spot.findAll({
+            ...query,
+            limit: size,
+            offset: (page - 1) * size
+
+        })
+        return res.status(200).json({
+            spots,
+            page,
+            size
+        })
+
+
 })
 
 //get all Spots for current User ----------------------
@@ -210,6 +258,12 @@ router.post("/:id/images", requireAuth, async (req, res) => {
 //create a Review based on a Spot id---------------------------
 router.post("/:id/reviews", requireAuth, async (req, res) => {
     const spot = await Spot.findByPk(req.params.id)
+    if (!spot) {
+        res.status(200).json({
+            message: "Spot couldn't be found",
+            statusCode: 404
+        })
+    }
     const { user } = req
     if (spot.ownerId === user.id) {
         res.json({
@@ -217,16 +271,11 @@ router.post("/:id/reviews", requireAuth, async (req, res) => {
             statusCode: 400,
         })
     }
-    if (spot === null) {
-        res.status(200).json({
-            "message": "Spot couldn't be found",
-            "statusCode": 404
-        })
-    }
+
     const { spotId, review, stars} = req.body
     let errors = [];
-    if (!req.body.review) errors.push("Review text is required")
-    if (!req.body.stars) errors.push("Stars must be an integer from 1 to 5")
+    if (!review) errors.push("Review text is required")
+    if (!stars) errors.push("Stars must be an integer from 1 to 5")
     if (errors.length) {
         res.status(400).json({
             message: "Validation error",
@@ -271,15 +320,53 @@ router.get('/:id/bookings', requireAuth, async (req, res) => {
             where: {spotId: spot.id},
             include: {model: User, attributes: ['id','firstName','lastName']},
         })
+
         res.status(200).json(bookings)
     }
 })
 
 //create a Booking based on a Spot id---------------------------
-router.post("/:id/bookings",  async (req, res) => {
+router.post("/:id/bookings", requireAuth,  async (req, res) => {
+    let spot = await Spot.findByPk(req.params.id)
+    const {userId, spotId, startDate, endDate} = req.body
+    let overlappingDates = await Booking.findAll({
+        where: {[Op.and] : sequelize.literal(`(startDate, endDate) OVERLAPS ('${startDate}', '${endDate}')`)}
 
+    })
+    console.log('over lapping dates', overlappingDates)
+    if (!spot) {
+        res.status(200).json({
+            message: "Spot couldn't be found",
+            statusCode: 404
+        })
+    }
+    const { user } = req
+    if (spot.ownerId === user.id) {
+        res.json({
+            message: "Cannot book own your own spot",
+            statusCode: 400,
+        })
+    }
+
+
+    let errors = [];
+    if (new Date(startDate) >= new Date(endDate) ) errors.push("endDate cannot be on or before startDate")
+    //need err for checking overlapping dates of other users.
+
+    if (errors.length) {
+        res.status(400).json({
+            message: "Validation error",
+            statusCode: 400,
+            errors
+        })
+    }
+    const booking = await spot.createBooking({
+        userId: user.id,
+        spotId, startDate, endDate
+    })
     res.status(200).json({
-        /*return id, spotId, Spot:{all the stuffs},userId, start,end */
+        message: "The Booking was successful",
+        booking
     })
 })
 
