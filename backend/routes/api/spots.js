@@ -327,11 +327,8 @@ router.get('/:id/bookings', requireAuth, async (req, res) => {
 router.post("/:id/bookings", requireAuth,  async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
     const {userId, spotId, startDate, endDate} = req.body
-    let overlappingDates = await Booking.findAll({
-        where: {[Op.and] : sequelize.literal(`(startDate, endDate) OVERLAPS ('${startDate}', '${endDate}')`)}
 
-    })
-    console.log('over lapping dates', overlappingDates)
+
     if (!spot) {
         res.status(200).json({
             message: "Spot couldn't be found",
@@ -405,7 +402,7 @@ router.put("/:id", spotCheck, requireAuth, async (req, res) => {
     }
 })
 
-// delete a Spot    // WORKS!-------------------------------
+// delete a Spot    
 router.delete("/:id", requireAuth, async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
     const { user } = req

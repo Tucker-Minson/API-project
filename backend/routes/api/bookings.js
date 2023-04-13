@@ -1,5 +1,5 @@
 const express = require('express')
-const { setTokenCookie, restoreUser, requireAuth } = require('../../utils/auth');
+const { requireAuth } = require('../../utils/auth');
 
 const {User, Spot, Booking} = require('../../db/models');
 
@@ -27,8 +27,24 @@ router.put('/:id', async (req, res) => {
 });
 
 //delete a Booking-----------------------------------------------------
-router.delete('/:id', async (req, res) => {
+router.delete('/:id',requireAuth, async (req, res) => {
+    let booking = await Booking.findByPk(req.params.id)
+    const {user} = req
 
-    res.status(200).json()
+    if (booking.userId !== user.id) {
+        res.json({
+            message: "Validation error",
+            statusCode: 400,
+        })
+    }
+    if (!booking) {
+        res.status(404).json({
+            message: "This Booking couldn't be found",
+        })
+    }
+    await booking.destroy()
+    res.status(200).json({
+        message: "Successfully deleted"
+    })
 });
 module.exports = router;
