@@ -6,11 +6,39 @@ const { Spot, User, Image, Review, Booking} = require("../../db/models");
 const sequelize = require('sequelize')
 const Op = sequelize.Op
 const router = express.Router();
-const { check, validationResult } = require('express-validator');
-const { handleValidationErrors } = require('../../utils/validation');
 
 
 
+
+//Middleware
+
+const spotCheck = (req, res, next) => {
+    let errors = []
+
+    if (!req.body.address) errors.push("Street address is required")
+    if (!req.body.city) errors.push("City is required")
+    if (!req.body.state) errors.push("State is required")
+    if (!req.body.country) errors.push("Country is required")
+    if (!req.body.lat) errors.push("Latitude is not valid")
+    if (!req.body.lng) errors.push("Longitude is not valid")
+    if (!req.body.name) errors.push("Name must be less than 50 characters")
+    if (!req.body.description) errors.push("Description is required")
+    if (!req.body.price) errors.push("Price per day is required")
+
+    if(errors.length > 0) {
+        const err = new Error('Invalid user Input')
+        err.statusCode = 400
+        err.errors = errors
+        return next(err)
+    }
+    next()
+}
+//make this into a middle where so it will apply the avg stars in each endpoint
+//should work for:
+// get all spots,
+// get all spots by current user
+// get by spot id
+// const getAvg = (req, res, next) => {}
 
 //get all Spots----------------------------------------
 router.get("/", async (req, res) => {
@@ -165,30 +193,7 @@ router.get("/:id/reviews", async (req, res) => {
 })
 
 
-// middleware checking if a spot exists
-/*maybe let the current data be saved when used for edit*/
 
-const spotCheck = (req, res, next) => {
-    let errors = []
-
-    if (!req.body.address) errors.push("Street address is required")
-    if (!req.body.city) errors.push("City is required")
-    if (!req.body.state) errors.push("State is required")
-    if (!req.body.country) errors.push("Country is required")
-    if (!req.body.lat) errors.push("Latitude is not valid")
-    if (!req.body.lng) errors.push("Longitude is not valid")
-    if (!req.body.name) errors.push("Name must be less than 50 characters")
-    if (!req.body.description) errors.push("Description is required")
-    if (!req.body.price) errors.push("Price per day is required")
-
-    if(errors.length > 0) {
-        const err = new Error('Invalid user Input')
-        err.statusCode = 400
-        err.errors = errors
-        return next(err)
-    }
-    next()
-}
 //create a Spot        //Works
 
 router.post("/", spotCheck, requireAuth, async (req, res) => {
@@ -208,20 +213,13 @@ router.post("/", spotCheck, requireAuth, async (req, res) => {
         price
     })
 
-        if (validationResult === false) {
-            res.status(400).json({
-                message: "Validation Error",
-                statusCode: 400,
-                errors
-            })
-        } else {
             res.status(201).json({
                 message: "SUCCESS!(no message needed delete later)",
                 statusCode: 201,
                 Spot: newSpot
             })
 
-        }
+
 })
 router.get("/:id/images",  async (req, res) => {
     const images = await Image.findAll()
@@ -398,12 +396,6 @@ router.put("/:id", spotCheck, requireAuth, async (req, res) => {
         message: "Spot couldn't be found",
         statusCode: 404
     })
-    } else if (validationResult === false) {
-        res.status(400).json({
-            message: "This Spot successfully updated",
-            statusCode: 400,
-            errors
-        })
     } else {
         await spot.save()
         res.status(200).json({
