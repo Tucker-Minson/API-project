@@ -37,11 +37,18 @@ router.delete('/:id',requireAuth, async (req, res) => {
             statusCode: 400,
         })
     }
-    if (!booking) {
+    if (!booking) { // fix "cannot read properties of null(reading userId)"
         res.status(404).json({
-            message: "This Booking couldn't be found",
+            message: "Booking couldn't be found",
         })
     }
+    //add this Error fix for is user tries to delete booking after the start date
+    // if (!booking) {
+    //     res.status(403).json(        {
+    //         message: "Bookings that have been started can't be deleted",
+    //         statusCode: 403
+    //     })
+    // }
     await booking.destroy()
     res.status(200).json({
         message: "Successfully deleted"
