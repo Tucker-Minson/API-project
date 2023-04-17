@@ -57,12 +57,13 @@ router.put('/:id', requireAuth ,async (req, res) => {
     let errors = [];
     const {startDate, endDate} = req.body
 
-    booking.startDate = new Date(startDate),
-    booking.endDate = new Date (endDate)
+    let checkStartDate = new Date (startDate)
+    let checkEndDate = new Date (endDate)
+    let today = new Date()
 
     if (booking.userId !== user.id) errors.push('Invalid User')
-    if (startDate >= endDate) errors.push("End date cannot come before start date")
-
+    if (checkStartDate >= booking.endDate) errors.push("End date cannot come before start date")
+    if (checkEndDate <= today) errors.push("Past bookings can't be modified")
 
     if (errors.length > 0) {
         const err = new Error('Validation error')
@@ -85,21 +86,21 @@ router.delete('/:id', requireAuth, async (req, res) => {
         })
     }
     const {user} = req
-
     if (booking.userId !== user.id) {
         res.json({
             message: "Validation error",
             statusCode: 400,
         })
     }
-
-    //add this Error fix for is user tries to delete booking after the start date
-    // if (!booking) {
-    //     res.status(403).json(        {
-    //         message: "Bookings that have been started can't be deleted",
-    //         statusCode: 403
-    //     })
-    // }
+    console.log(booking)
+    let startDate = Booking.startDate
+    booking.startDate = new Date(startDate)
+    if (startDate) {
+        res.status(403).json(        {
+            message: "Bookings that have been started can't be deleted",
+            statusCode: 403
+        })
+    }
     await booking.destroy()
     res.status(200).json({
         message: "Successfully deleted"
