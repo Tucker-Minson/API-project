@@ -61,19 +61,21 @@ router.post("/:id/images", requireAuth, async (req, res) => {
 //Edit a Review-------------------------------------
 //errors not working properly> its an issue with line 54 & 55
 router.put('/:id', requireAuth, async (req, res, next) => {
-    const { user } = req
-    const { review, stars } = req.body;
-    let errors = [];
     const reviews = await Review.findByPk(req.params.id)
+    const { user } = req
+    const { id, review, stars } = req.body;
+
+    if (!reviews.id) {
+        res.status(404).json({
+            message: "Review couldn't be found",
+            statusCode: 404
+        })
+    }
+
+    let errors = [];
     reviews.review = review,
     reviews.stars = stars
 
-    // if (req.body.review === null ) {     //not currently working
-    //     res.status(404).json({
-    //         message: "Spot couldn't be found",
-    //         statusCode: 404
-    //     })
-    // }
     if (reviews.userId !== user.id) {
         res.json({
             message: "Validation error",
@@ -96,17 +98,17 @@ router.put('/:id', requireAuth, async (req, res, next) => {
 //Delete a Review-----------------------------------
 router.delete('/:id', requireAuth, async (req, res) => {
     let review = await Review.findByPk(req.params.id)
+    if (!review) {
+        res.status(404).json({
+            message: "Review couldn't be found",
+            statusCode: 404
+        })
+    }
     const { user } = req
     if (review.userId !== user.id) {
         res.json({
             message: "Validation error",
             statusCode: 400,
-        })
-    }
-    if (!review) {
-        res.status(404).json({
-            message: "Review couldn't be found",
-            statusCode: 404
         })
     }
     await review.destroy()
