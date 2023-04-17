@@ -6,9 +6,12 @@ const { Spot, User, Image, Review, Booking} = require("../../db/models");
 const sequelize = require('sequelize')
 const Op = sequelize.Op
 const router = express.Router();
+//-------------for date Range ---------------
+const Moment = require('moment');
+const MomentRange = require('moment-range');
 
-
-
+const moment = MomentRange.extendMoment(Moment);
+//---------------------------------------------
 
 //Middleware
 
@@ -299,12 +302,14 @@ router.post("/:id/reviews", requireAuth, async (req, res) => {
 router.get('/:id/bookings', requireAuth, async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
     const { user } = req
+
     if (!spot) {
         res.json({
             message: "Spot couldn't be found",
             statusCode: 404
         })
     }
+
     if (spot.ownerId !== user.id) {
         const bookings = await Booking.findAll({
             where: {spotId: spot.id},
@@ -318,7 +323,6 @@ router.get('/:id/bookings', requireAuth, async (req, res) => {
             where: {spotId: spot.id},
             include: {model: User, attributes: ['id','firstName','lastName']},
         })
-
         res.status(200).json(bookings)
     }
 })
@@ -343,10 +347,12 @@ router.post("/:id/bookings", requireAuth,  async (req, res) => {
         })
     }
 
-
     let errors = [];
     if (new Date(startDate) >= new Date(endDate) ) errors.push("endDate cannot be on or before startDate")
+
     //need err for checking overlapping dates of other users.
+    let thisDateRange = moment.range(startDate, endDate)
+    console.log('console.log HERE -->', thisDateRange)
 
     if (errors.length) {
         res.status(400).json({
@@ -355,6 +361,16 @@ router.post("/:id/bookings", requireAuth,  async (req, res) => {
             errors
         })
     }
+    const bookingsActive = await Booking.findAll()
+    bookingsActive.forEach(booking => {
+        let range = moment.range(booking.startDate, booking.endDate)
+        if (thisDateRange.overlaps(range)) {
+            res.status(403).json({
+                message: "Sorry, this spot is already booked for the specified dates",
+                statusCode: 403
+        })
+        }
+    })
     const booking = await spot.createBooking({
         userId: user.id,
         spotId, startDate, endDate
@@ -402,7 +418,7 @@ router.put("/:id", spotCheck, requireAuth, async (req, res) => {
     }
 })
 
-// delete a Spot    
+// delete a Spot
 router.delete("/:id", requireAuth, async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
     const { user } = req
