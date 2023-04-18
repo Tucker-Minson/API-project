@@ -17,18 +17,29 @@ router.get('/current', requireAuth, async (req, res) => {
         },
         include: [
             {model: User,
-            attributes: ['id','firstName','lastName']
+                attributes: ['id','firstName','lastName']
+            },
+            {model: Spot,
+                attributes: [
+                    "id",
+                    'ownerId',
+                    "address",
+                    "city",
+                    "state",
+                    "country",
+                    "lat",
+                    "lng",
+                    "name",
+                    "price",
+                    'previewImage'
+                ]
+            },
+            {model: Image,
+                attributes: ['id', 'url']
             }
-            , Spot /*needs a ReviewsImage column*/
         ]
     })
-    res.status(200).json({
-        Reviews: currentUserReviews
-        // NEEDS:
-            //User: {id, firstname, lastname}
-            // Spots: {all Spot details}
-            // ReviewImages: {id, url}
-    })
+    res.status(200).json({Reviews: currentUserReviews})
 
 });
 
