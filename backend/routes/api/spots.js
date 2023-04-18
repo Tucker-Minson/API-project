@@ -1,3 +1,4 @@
+
 const express = require('express')
 const { requireAuth } = require('../../utils/auth');
 
@@ -247,12 +248,18 @@ router.post("/:id/images", requireAuth, async (req, res) => {
         })
     }
     const { url, preview } = req.body;
-    console.log("another console log for spot---->", spot)
+
+    if (preview === true) {
+        spot.previewImage = url
+        await spot.save()
+    }
+    console.log('preview console -->', preview)
+
     const image = await spot.createImage({
         url, preview
     })
 
-
+    await image.save()
     res.status(200).json({spot: image})
 })
 
@@ -284,6 +291,7 @@ router.post("/:id/reviews", requireAuth, async (req, res) => {
             errors
         })
     }
+
     const reviews = await spot.createReview({
         userId: user.id,
         spotId, review, stars

@@ -7,28 +7,12 @@ const router = express.Router();
 const { check } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
 
-// middleware for date checking
+//-------------for date Range ---------------
+const Moment = require('moment');
+const MomentRange = require('moment-range');
 
-    //     --  validation  error
-    //     --  statusCode: 400
-    //         --->  "endDate cannot come before startDate"
-    // -----------------------------------------------------
-
-
-
-// --  "message": "Booking couldn't be found"
-// --  statusCode: 404
-
-// -----------------------------------------------------
-// --  "message": "Past bookings can't be modified"
-// --  statusCode: 403
-
-// -----------------------------------------------------
-// --  "message": "Sorry, this spot is already booked for the specified dates",
-// --  "statusCode": 403,
-//     --->  "Start date conflicts with an existing booking"
-//     ---> "End date conflicts with an existing booking"
-// -----------------------------------------------------
+const moment = MomentRange.extendMoment(Moment);
+//---------------------------------------------
 
 
 //get all current User's Bookings--------------------------------------
@@ -65,13 +49,25 @@ router.put('/:id', requireAuth ,async (req, res) => {
     if (checkStartDate >= booking.endDate) errors.push("End date cannot come before start date")
     if (checkEndDate <= today) errors.push("Past bookings can't be modified")
 
+
     if (errors.length > 0) {
         const err = new Error('Validation error')
         err.statusCode = 400
         err.errors = errors
         res.status(400).json(err)
     }
-
+    let thisDateRange = moment.range(startDate, endDate)
+    
+    const bookingsActive = await Booking.findAll()
+    bookingsActive.forEach(booking => {
+        let range = moment.range(booking.startDate, booking.endDate)
+        if (thisDateRange.overlaps(range)) {
+            res.status(403).json({
+                message: "Sorry, this spot is already booked for the specified dates",
+                statusCode: 403
+        })
+        }
+    })
     await booking.save()
     res.status(200).json(booking)
 });
