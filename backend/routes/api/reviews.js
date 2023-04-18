@@ -47,8 +47,14 @@ router.get('/current', requireAuth, async (req, res) => {
 //Need to add reviewId to images table so it can be tracked
 
 router.post("/:id/images", requireAuth, async (req, res) => {
-
     const review = await Review.findByPk(req.params.id)
+    const { user } = req
+    if (review.userId !== user.id) {
+        res.json({
+            message: "Validation error",
+            statusCode: 400,
+        })
+    }
     if (!review) {
         res.status(404).json({
             message: "Review couldn't be found",
@@ -58,15 +64,23 @@ router.post("/:id/images", requireAuth, async (req, res) => {
     const spot = await Spot.findByPk(review.spotId)
     const { url, preview } = req.body
 
+
+    if (preview === true) {
+        spot.previewImage = url
+        await spot.save()
+    }
+
     const newReviewImage = await spot.createImage({
         url, spotId: review.spotId, reviewId: +req.params.id
     })
-    if (Number(newReviewImage) >= 10) {
+    console.log(newReviewImage)
+    if (Image.length >= 10) {
         res.status(403).json({
             message: "Maximum number of images for this resource was reached",
             statusCode: 403
         })
     }
+    await newReviewImage.save()
     res.status(200).json(newReviewImage)
 });
 //Edit a Review-------------------------------------
@@ -74,7 +88,7 @@ router.post("/:id/images", requireAuth, async (req, res) => {
 router.put('/:id', requireAuth, async (req, res, next) => {
     const reviews = await Review.findByPk(req.params.id)
     const { user } = req
-    const { id, review, stars } = req.body;
+    const { review, stars } = req.body;
 
     if (!reviews.id) {
         res.status(404).json({
