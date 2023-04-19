@@ -134,7 +134,7 @@ router.get("/:id", async (req, res) => {
         where: {
             spotId: spot.id
         },
-        attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']]
+        attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']],
     })
     let rating = spotRating.dataValues.avgRating
     if (!rating) {
@@ -143,27 +143,19 @@ router.get("/:id", async (req, res) => {
         spotJson.avgRating = rating.toFixed(2)
     }
     starRatingArr.push(spotJson)
+    //-------------SpotImages
+    const spotImage = await Image.findAll({
+        where: {spotId: spot.id},
+        attributes: ['id', 'url', 'preview']
+        })
+    //-------------Owner
+    const owner = await User.findByPk(spot.ownerId)
 
-    // SpotImages WIP
-    // let spotImages = []
-    // let images = await Image.findAll({
-    //     where: {
-    //         spotId: spot.id
-    //     },
-    //     attributes: [ 'id','url', 'preview']
-    // })
-    // let img = images.dataValues.previewImage
-    // if (!img) {
-    //     spotJson.previewImage = 'no preview picture found'
-    // } else {
-    //     spotJson.previewImage = img
-    // }
-    // spotImages.push(spotJson)
 
     res.status(200).json({
-        spot: {
             starRatingArr,
-        }
+            SpotImages: spotImage,
+            Owner: owner
     })
 })
 
@@ -175,13 +167,6 @@ router.get("/:id/reviews", async (req, res) => {
         where: {spotId: spot.id},
         include: {model: User, attributes: ['id','firstName','lastName']}
     })
-    // let reviewImages = await reviews.reduce(async (accum, review) => {
-    //     const images = await Image.findAll({
-    //         attributes: ['id', 'url'],
-    //         where: {reviewId: review.id},
-    //     })
-    //     return [...accum, ...images]
-    // }, [])
 
     if (!spot) {
         res.status(400).json({
@@ -197,7 +182,7 @@ router.get("/:id/reviews", async (req, res) => {
 
 
 
-//create a Spot        //Works
+//create a Spot
 
 router.post("/", spotCheck, requireAuth, async (req, res) => {
     const { address, city, state, country, lat, lng, name, description, price} = req.body;
@@ -249,7 +234,6 @@ router.post("/:id/images", requireAuth, async (req, res) => {
         spot.previewImage = url
         await spot.save()
     }
-    console.log('preview console -->', preview)
 
     const image = await spot.createImage({
         url, preview
@@ -334,7 +318,7 @@ router.get('/:id/bookings', requireAuth, async (req, res) => {
 //create a Booking based on a Spot id---------------------------
 router.post("/:id/bookings", requireAuth,  async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
-    const {userId, spotId, startDate, endDate} = req.body
+    const {spotId, startDate, endDate} = req.body
 
 
     if (!spot) {
@@ -354,9 +338,7 @@ router.post("/:id/bookings", requireAuth,  async (req, res) => {
     let errors = [];
     if (new Date(startDate) >= new Date(endDate) ) errors.push("endDate cannot be on or before startDate")
 
-    //need err for checking overlapping dates of other users.
     let thisDateRange = moment.range(startDate, endDate)
-    console.log('console.log HERE -->', thisDateRange)
 
     if (errors.length) {
         res.status(400).json({
