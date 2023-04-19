@@ -34,10 +34,10 @@ module.exports = {
         allowNull: false,
       },
       lat: {
-        type: Sequelize.FLOAT,
+        type: Sequelize.DECIMAL,
       },
       lng: {
-        type: Sequelize.FLOAT,
+        type: Sequelize.DECIMAL,
       },
       name: {
         type: Sequelize.STRING,
