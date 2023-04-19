@@ -142,7 +142,6 @@ router.get("/:id", async (req, res) => {
     } else {
         spotJson.avgRating = rating.toFixed(2)
     }
-    console.log("trying to get average rating num isolated", spotJson.avgRating)
     starRatingArr.push(spotJson)
 
     // SpotImages WIP
@@ -217,11 +216,7 @@ router.post("/", spotCheck, requireAuth, async (req, res) => {
         price
     })
 
-            res.status(201).json({
-                message: "SUCCESS!(no message needed delete later)",
-                statusCode: 201,
-                Spot: newSpot
-            })
+            res.status(201).json(newSpot)
 
 
 })
