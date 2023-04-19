@@ -40,10 +40,10 @@ module.exports = (sequelize, DataTypes) => {
 
     },
     lat: {
-      type:DataTypes.FLOAT,
+      type:DataTypes.DECIMAL,
     },
     lng: {
-      type:DataTypes.FLOAT,
+      type:DataTypes.DECIMAL,
     },
     name: {
       type:DataTypes.STRING,
