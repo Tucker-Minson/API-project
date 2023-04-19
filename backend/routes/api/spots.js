@@ -117,7 +117,7 @@ router.get("/current", requireAuth, async (req, res) => {
     res.status(200).json({"Spots": currentUserSpots})
 })
 //get details of a Spot from an id---------------------
-// needs: preview image
+
 router.get("/:id", async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
 
