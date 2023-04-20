@@ -120,43 +120,42 @@ router.get("/current", requireAuth, async (req, res) => {
 
 router.get("/:id", async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
-
+    spot = spot.toJSON()
     if (!spot) {
         res.status(400).json({
             message: "Spot couldn't be found",
             statusCode: 404
         })
     }
-    //avgRating
-    let starRatingArr = []
-    let spotJson = spot.toJSON()
-    let spotRating = await Review.findOne({
-        where: {
-            spotId: spot.id
-        },
-        attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']],
+    // numReviews
+    const reviews = await Review.findAll({
+        where: {spotId :spot.id}
     })
-    let rating = spotRating.dataValues.avgRating
-    if (!rating) {
-        spotJson.avgRating = "No Reviews yet"
-    } else {
-        spotJson.avgRating = rating.toFixed(2)
-    }
-    starRatingArr.push(spotJson)
+    const numReviews = reviews.length
+    //avgRating
+
+    let avgRating = await Review.findAll({
+    where: {
+        spotId: spot.id
+    },
+    attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']],
+    })
+    avgRating= avgRating[0].toJSON().avgRating
+
     //-------------SpotImages
     const spotImage = await Image.findAll({
         where: {spotId: spot.id},
         attributes: ['id', 'url', 'preview']
         })
+
     //-------------Owner
     const owner = await User.findByPk(spot.ownerId)
+    spot.numReviews = numReviews
+    spot.avgRating = avgRating
+    spot.SpotImages = spotImage
+    spot.Owner = owner
 
-
-    res.status(200).json({
-            starRatingArr,
-            SpotImages: spotImage,
-            Owner: owner
-    })
+    res.status(200).json(spot)
 })
 
 //Get Reviews by Spot Id---------------------------
