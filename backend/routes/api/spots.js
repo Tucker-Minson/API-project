@@ -245,21 +245,32 @@ router.post("/:id/images", requireAuth, async (req, res) => {
 //create a Review based on a Spot id---------------------------
 router.post("/:id/reviews", requireAuth, async (req, res) => {
     const spot = await Spot.findByPk(req.params.id)
+
     if (!spot) {
         res.status(200).json({
             message: "Spot couldn't be found",
             statusCode: 404
         })
     }
-    const { user } = req
-    if (spot.ownerId === user.id) {
-        res.json({
-            message: "Cannot review own your own spot",
-            statusCode: 400,
-        })
-    }
-
     const { spotId, review, stars} = req.body
+    const { user } = req
+
+    const reviews = await Review.findAll({
+        where: {userId: user.id}
+    })
+    // console.log('THIS IS REVIEWS', )
+    let userReview = false
+    reviews.forEach(review => {
+        console.log('userReview --> ',userReview)
+        let reviewJson = review.toJSON()
+        console.log("Spot id -->", reviewJson.spotId)
+        if (reviewJson.spotId == spot.id){
+            userReview = true
+        }
+    })
+
+
+
     let errors = [];
     if (!review) errors.push("Review text is required")
     if (!stars) errors.push("Stars must be an integer from 1 to 5")
@@ -270,17 +281,21 @@ router.post("/:id/reviews", requireAuth, async (req, res) => {
             errors
         })
     }
+    if (userReview) {
+        res.status(403).json({
+            message: "User already has a review for this spot",
+            statusCode: 403,
+        })
+    } else {
+        const reviewy = await spot.createReview({
+            userId: user.id,
+            spotId, review, stars
+        })
 
-    const reviews = await spot.createReview({
-        userId: user.id,
-        spotId, review, stars
-    })
-
-
-    res.status(200).json({
-        reviews
-        /*return id, spotId, Spot:{all the stuffs},userId, start,end */
-    })
+        res.status(200).json({
+            reviewy
+        })
+    }
 })
 
 
