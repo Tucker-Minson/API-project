@@ -97,6 +97,7 @@ router.get("/", async (req, res) => {
             offset: (page - 1) * size
 
         })
+
         return res.status(200).json({
             spots,
             page,
@@ -140,7 +141,7 @@ router.get("/:id", async (req, res) => {
     },
     attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']],
     })
-    avgRating= avgRating[0].toJSON().avgRating
+    avgRating = parseFloat(avgRating[0].toJSON().avgRating.toFixed(2))
 
     //-------------SpotImages
     const spotImage = await Image.findAll({
@@ -150,6 +151,7 @@ router.get("/:id", async (req, res) => {
 
     //-------------Owner
     const owner = await User.findByPk(spot.ownerId)
+    spot.previewImage = spotImage[0].url
     spot.numReviews = numReviews
     spot.avgRating = avgRating
     spot.SpotImages = spotImage
