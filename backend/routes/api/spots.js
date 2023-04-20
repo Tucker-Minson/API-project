@@ -120,51 +120,42 @@ router.get("/current", requireAuth, async (req, res) => {
 
 router.get("/:id", async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
-
+    spot = spot.toJSON()
     if (!spot) {
         res.status(400).json({
             message: "Spot couldn't be found",
             statusCode: 404
         })
     }
+    // numReviews
+    const reviews = await Review.findAll({
+        where: {spotId :spot.id}
+    })
+    const numReviews = reviews.length
     //avgRating
-    let starRatingArr = []
-    let spotJson = spot.toJSON()
-    let spotRating = await Review.findOne({
-        where: {
-            spotId: spot.id
-        },
-        attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']]
-    })
-    let rating = spotRating.dataValues.avgRating
-    if (!rating) {
-        spotJson.avgRating = "No Reviews yet"
-    } else {
-        spotJson.avgRating = rating.toFixed(2)
-    }
-    starRatingArr.push(spotJson)
 
-    // SpotImages WIP
-    // let spotImages = []
-    // let images = await Image.findAll({
-    //     where: {
-    //         spotId: spot.id
-    //     },
-    //     attributes: [ 'id','url', 'preview']
-    // })
-    // let img = images.dataValues.previewImage
-    // if (!img) {
-    //     spotJson.previewImage = 'no preview picture found'
-    // } else {
-    //     spotJson.previewImage = img
-    // }
-    // spotImages.push(spotJson)
-
-    res.status(200).json({
-        spot: {
-            starRatingArr,
-        }
+    let avgRating = await Review.findAll({
+    where: {
+        spotId: spot.id
+    },
+    attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']],
     })
+    avgRating= avgRating[0].toJSON().avgRating
+
+    //-------------SpotImages
+    const spotImage = await Image.findAll({
+        where: {spotId: spot.id},
+        attributes: ['id', 'url', 'preview']
+        })
+
+    //-------------Owner
+    const owner = await User.findByPk(spot.ownerId)
+    spot.numReviews = numReviews
+    spot.avgRating = avgRating
+    spot.SpotImages = spotImage
+    spot.Owner = owner
+
+    res.status(200).json(spot)
 })
 
 //Get Reviews by Spot Id---------------------------
@@ -175,13 +166,6 @@ router.get("/:id/reviews", async (req, res) => {
         where: {spotId: spot.id},
         include: {model: User, attributes: ['id','firstName','lastName']}
     })
-    // let reviewImages = await reviews.reduce(async (accum, review) => {
-    //     const images = await Image.findAll({
-    //         attributes: ['id', 'url'],
-    //         where: {reviewId: review.id},
-    //     })
-    //     return [...accum, ...images]
-    // }, [])
 
     if (!spot) {
         res.status(400).json({
@@ -197,7 +181,7 @@ router.get("/:id/reviews", async (req, res) => {
 
 
 
-//create a Spot        //Works
+//create a Spot
 
 router.post("/", spotCheck, requireAuth, async (req, res) => {
     const { address, city, state, country, lat, lng, name, description, price} = req.body;
@@ -249,7 +233,6 @@ router.post("/:id/images", requireAuth, async (req, res) => {
         spot.previewImage = url
         await spot.save()
     }
-    console.log('preview console -->', preview)
 
     const image = await spot.createImage({
         url, preview
@@ -262,21 +245,32 @@ router.post("/:id/images", requireAuth, async (req, res) => {
 //create a Review based on a Spot id---------------------------
 router.post("/:id/reviews", requireAuth, async (req, res) => {
     const spot = await Spot.findByPk(req.params.id)
+
     if (!spot) {
         res.status(200).json({
             message: "Spot couldn't be found",
             statusCode: 404
         })
     }
-    const { user } = req
-    if (spot.ownerId === user.id) {
-        res.json({
-            message: "Cannot review own your own spot",
-            statusCode: 400,
-        })
-    }
-
     const { spotId, review, stars} = req.body
+    const { user } = req
+
+    const reviews = await Review.findAll({
+        where: {userId: user.id}
+    })
+    // console.log('THIS IS REVIEWS', )
+    let userReview = false
+    reviews.forEach(review => {
+        console.log('userReview --> ',userReview)
+        let reviewJson = review.toJSON()
+        console.log("Spot id -->", reviewJson.spotId)
+        if (reviewJson.spotId == spot.id){
+            userReview = true
+        }
+    })
+
+
+
     let errors = [];
     if (!review) errors.push("Review text is required")
     if (!stars) errors.push("Stars must be an integer from 1 to 5")
@@ -287,17 +281,21 @@ router.post("/:id/reviews", requireAuth, async (req, res) => {
             errors
         })
     }
+    if (userReview) {
+        res.status(403).json({
+            message: "User already has a review for this spot",
+            statusCode: 403,
+        })
+    } else {
+        const reviewy = await spot.createReview({
+            userId: user.id,
+            spotId, review, stars
+        })
 
-    const reviews = await spot.createReview({
-        userId: user.id,
-        spotId, review, stars
-    })
-
-
-    res.status(200).json({
-        reviews
-        /*return id, spotId, Spot:{all the stuffs},userId, start,end */
-    })
+        res.status(200).json({
+            reviewy
+        })
+    }
 })
 
 
@@ -334,7 +332,7 @@ router.get('/:id/bookings', requireAuth, async (req, res) => {
 //create a Booking based on a Spot id---------------------------
 router.post("/:id/bookings", requireAuth,  async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
-    const {userId, spotId, startDate, endDate} = req.body
+    const {spotId, startDate, endDate} = req.body
 
 
     if (!spot) {
@@ -354,9 +352,7 @@ router.post("/:id/bookings", requireAuth,  async (req, res) => {
     let errors = [];
     if (new Date(startDate) >= new Date(endDate) ) errors.push("endDate cannot be on or before startDate")
 
-    //need err for checking overlapping dates of other users.
     let thisDateRange = moment.range(startDate, endDate)
-    console.log('console.log HERE -->', thisDateRange)
 
     if (errors.length) {
         res.status(400).json({

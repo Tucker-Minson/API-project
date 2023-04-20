@@ -43,8 +43,6 @@ router.get('/current', requireAuth, async (req, res) => {
 
 });
 
-//Add an Image to a Review based on the Review's id-
-//Need to add reviewId to images table so it can be tracked
 
 router.post("/:id/images", requireAuth, async (req, res) => {
     const review = await Review.findByPk(req.params.id)
