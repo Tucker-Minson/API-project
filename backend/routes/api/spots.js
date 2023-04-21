@@ -101,16 +101,18 @@ router.get("/", async (req, res) => {
         })
 
         //getting avgRating for each
-        let starRatings = []
 
         let finalSpots = spots.map(spot => {
             let reviews = spot.toJSON().Reviews
+            let starRatings = []
+            let reviewArr = []
+
             reviews.forEach(review => {
                 let rating = review.stars
                 starRatings.push(rating)
+                reviewArr.push(reviews)
             });
-
-            let sumRatings = starRatings.reduce((prevNum, currNum) => prevNum + currNum, starRatings[0])
+            let sumRatings = starRatings.reduce((prevNum, currNum) => prevNum + currNum, 0)
             let avgRating = parseFloat((sumRatings/starRatings.length).toFixed(2))
             spot.avgRating = avgRating
             let j = spot.toJSON()
