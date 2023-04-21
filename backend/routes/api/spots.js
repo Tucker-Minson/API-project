@@ -397,7 +397,9 @@ router.post("/:id/bookings", requireAuth,  async (req, res) => {
             errors
         })
     }
-    const bookingsActive = await Booking.findAll()
+    const bookingsActive = await Booking.findAll({
+        where: {spotId: spot.id}
+    })
     bookingsActive.forEach(booking => {
         let range = moment.range(booking.startDate, booking.endDate)
         if (thisDateRange.overlaps(range)) {

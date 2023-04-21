@@ -1,31 +1,3 @@
-//findAll by id with extra stuff
-router.get("/:id", async (req, res) => {
-    const spots = await Spot.findAll({
-        include: [
-            //get Reviews for each spot
-            { model: Review },
-            //get Images for each spot
-            { model: Image },
-        ]
-    })
-
-    let spotsList = [];
-    spots.forEach(spot => {
-        spotsList.push(spot.toJSON())
-    });
-
-    spotsList.forEach(spot => {
-        spot.Images.forEach(image => {
-            if (image.preview === true) {
-                spot.preview = image.url
-            }
-        })
-        if (!spot.preview) {
-            spot.preview = 'no preview picture found'
-        }
-
-        delete spot.Images
-    })
-
-    res.status(200).json(spotsList)
-})
+need fix error in both 'create a booking based on Spot id' & 'edit booking'
+    - it checks all dates not just dates for specified spot.
+    - refer to avgRating structure in get all spots

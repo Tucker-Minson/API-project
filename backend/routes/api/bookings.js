@@ -40,6 +40,7 @@ router.put('/:id', requireAuth ,async (req, res) => {
             statusCode: 404
         })
     }
+
     const {user} = req;
     let errors = [];
     const {startDate, endDate} = req.body
@@ -49,9 +50,8 @@ router.put('/:id', requireAuth ,async (req, res) => {
     let today = new Date()
 
     if (booking.userId !== user.id) errors.push('Invalid User')
-    if (checkStartDate >= booking.endDate) errors.push("End date cannot come before start date")
+    if (checkStartDate >= checkEndDate) errors.push("endDate cannot come before startDate")
     if (checkEndDate <= today) errors.push("Past bookings can't be modified")
-
 
     if (errors.length > 0) {
         const err = new Error('Validation error')
@@ -60,15 +60,21 @@ router.put('/:id', requireAuth ,async (req, res) => {
         res.status(400).json(err)
     }
     let thisDateRange = moment.range(startDate, endDate)
-
     const bookingsActive = await Booking.findAll()
     bookingsActive.forEach(booking => {
         let range = moment.range(booking.startDate, booking.endDate)
         if (thisDateRange.overlaps(range)) {
+            let errs = [];
+            let start = moment(startDate)
+            let end = moment(endDate)
+            if(start.within(range)) errs.push("Start date conflicts with an existing booking")
+            if(end.within(range)) errs.push("End date conflicts with an existing booking")
+
             res.status(403).json({
                 message: "Sorry, this spot is already booked for the specified dates",
-                statusCode: 403
-        })
+                statusCode: 403,
+                errs
+            })
         }
     })
     await booking.save()
