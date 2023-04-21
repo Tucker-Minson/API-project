@@ -6,6 +6,7 @@ const { User , Review, Spot, Image } = require('../../db/models');
 const router = express.Router();
 const { check } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
+const e = require('express');
 
 
 //GET all Reviews of Current User-------------------
@@ -43,43 +44,47 @@ router.get('/current', requireAuth, async (req, res) => {
 
 });
 
-
+// create Image for a Review
 router.post("/:id/images", requireAuth, async (req, res) => {
     const review = await Review.findByPk(req.params.id)
     const { user } = req
-    if (review.userId !== user.id) {
-        res.json({
-            message: "Validation error",
-            statusCode: 400,
-        })
-    }
     if (!review) {
         res.status(404).json({
             message: "Review couldn't be found",
             statusCode: 404
     })
     }
+    if (review.userId !== user.id) {
+        res.json({
+            message: "Validation error",
+            statusCode: 400,
+        })
+    }
+
     const spot = await Spot.findByPk(review.spotId)
     const { url, preview } = req.body
-
+    const prevImgsArr = await Image.findAll({
+        where: { spotId: spot.id }
+    })
 
     if (preview === true) {
         spot.previewImage = url
-        await spot.save()
     }
 
-    const newReviewImage = await spot.createImage({
-        url, spotId: review.spotId, reviewId: +req.params.id
-    })
-    console.log(newReviewImage)
-    if (Image.length >= 10) {
-        res.status(403).json({
+    if (prevImgsArr.length > 9) {
+        return res.status(403).json({
             message: "Maximum number of images for this resource was reached",
             statusCode: 403
         })
+    } else {
+        const newReviewImage = await spot.createImage({
+            url, spotId: review.spotId, reviewId: +req.params.id
+        })
+        let id = newReviewImage.id
+        newReviewImage.url = url
+        let img = { id, url}
+        res.status(200).json(img)
     }
-    await newReviewImage.save()
-    res.status(200).json(newReviewImage)
 });
 //Edit a Review-------------------------------------
 //errors not working properly> its an issue with line 54 & 55
