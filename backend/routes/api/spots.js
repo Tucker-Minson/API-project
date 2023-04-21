@@ -101,23 +101,24 @@ router.get("/", async (req, res) => {
         })
 
         //getting avgRating for each
-        let starRatings = []
 
         let finalSpots = spots.map(spot => {
             let reviews = spot.toJSON().Reviews
+            let starRatings = []
+            let reviewArr = []
+
             reviews.forEach(review => {
                 let rating = review.stars
                 starRatings.push(rating)
+                reviewArr.push(reviews)
             });
-
-            let sumRatings = starRatings.reduce((prevNum, currNum) => prevNum + currNum, starRatings[0])
+            let sumRatings = starRatings.reduce((prevNum, currNum) => prevNum + currNum, 0)
             let avgRating = parseFloat((sumRatings/starRatings.length).toFixed(2))
             spot.avgRating = avgRating
             let j = spot.toJSON()
             delete j.Reviews
             return j
         });
-        //previewImage
 
         return res.status(200).json({
             spots: finalSpots,
@@ -228,6 +229,7 @@ router.post("/", spotCheck, requireAuth, async (req, res) => {
 
 
 })
+//get all images
 router.get("/:id/images",  async (req, res) => {
     const images = await Image.findAll()
     res.status(200).json(images)
@@ -407,9 +409,9 @@ router.post("/:id/bookings", requireAuth,  async (req, res) => {
 
 
 
-//edit a Spot // WORKS---------------------------------------
+//edit a Spot
 router.put("/:id", spotCheck, requireAuth, async (req, res) => {
-    const { address, city, state, country, lat, lng, name, description, price} = req.body;
+    const { id, address, city, state, country, lat, lng, name, description, price, createdAt, updatedAt} = req.body;
     let spot = await Spot.findByPk(req.params.id)
     const { user } = req
     if (spot.ownerId !== user.id) {
@@ -418,6 +420,7 @@ router.put("/:id", spotCheck, requireAuth, async (req, res) => {
             statusCode: 400,
         })
     }
+    spot.id = id,
     spot.address = address,
     spot.city = city,
     spot.state = state,
@@ -434,11 +437,9 @@ router.put("/:id", spotCheck, requireAuth, async (req, res) => {
         statusCode: 404
     })
     } else {
+        let updatedSpot = {id, ownerId:user.id, address, city, state, country, lat, lng, name, description, price, createdAt, updatedAt}
         await spot.save()
-        res.status(200).json({
-            message: "This Spot successfully updated",
-            spot
-        })
+        res.status(200).json(updatedSpot)
     }
 })
 

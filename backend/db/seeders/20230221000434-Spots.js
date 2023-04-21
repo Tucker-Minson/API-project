@@ -19,7 +19,8 @@ module.exports = {
         lng: -122.4730327,
         name: "App Academy",
         description: "Place where web developers are created",
-        price: 123
+        price: 123,
+        previewImage: 'its a picture'
       }, {
         ownerId: 2,
         address: "624 Pirates Alley",
@@ -30,7 +31,8 @@ module.exports = {
         lng: -90.06421,
         name: "Faulkner House Books",
         description: "Haunted House turned into a book store",
-        price: 25
+        price: 25,
+        previewImage: 'its a picture'
       }, {
         ownerId: 3,
         address: "120 NW 3rd Ave",
@@ -41,7 +43,8 @@ module.exports = {
         lng: -122.67111,
         name: "Haunted Shanghai Tunnel",
         description: "Haunted tunnels beneath",
-        price: 40
+        price: 40,
+        previewImage: 'its a picture'
       },  {
         ownerId: 4,
         address: "333 E Wonderview Ave",
@@ -52,7 +55,8 @@ module.exports = {
         lng:-105.51896,
         name: "The Stanley Hotel",
         description: "Real hotel that Was the Inspariation of Stephen King's 'The Shining'",
-        price: 55
+        price: 55,
+        previewImage: 'its a picture'
       },  {
         ownerId: 5,
         address: "219 Baltimore St",
@@ -63,7 +67,8 @@ module.exports = {
         lng: -77.23118,
         name: "Gettysburg Ghost Walk",
         description: "Location of one of the Bloodies battles in American history",
-        price: 15
+        price: 15,
+        previewImage: 'its a picture'
       },  {
         ownerId: 5,
         address: "51 Charter St",
@@ -74,7 +79,8 @@ module.exports = {
         lng: -70.89129,
         name: "Salem Witch Village",
         description: "Location of the Salem Witch trials",
-        price: 101
+        price: 101,
+        previewImage: 'its a picture'
       },
 ], {});
 
