@@ -37,6 +37,8 @@ const spotCheck = (req, res, next) => {
     }
     next()
 }
+
+
 //make this into a middle where so it will apply the avg stars in each endpoint
 //should work for:
 // get all spots,
@@ -94,11 +96,31 @@ router.get("/", async (req, res) => {
         const spots = await Spot.findAll({
             ...query,
             limit: size,
-            offset: (page - 1) * size
-
+            offset: (page - 1) * size,
+            include: {model: Review}
         })
+
+        //getting avgRating for each
+        let starRatings = []
+
+        let finalSpots = spots.map(spot => {
+            let reviews = spot.toJSON().Reviews
+            reviews.forEach(review => {
+                let rating = review.stars
+                starRatings.push(rating)
+            });
+
+            let sumRatings = starRatings.reduce((prevNum, currNum) => prevNum + currNum, starRatings[0])
+            let avgRating = parseFloat((sumRatings/starRatings.length).toFixed(2))
+            spot.avgRating = avgRating
+            let j = spot.toJSON()
+            delete j.Reviews
+            return j
+        });
+        //previewImage
+
         return res.status(200).json({
-            spots,
+            spots: finalSpots,
             page,
             size
         })
@@ -140,7 +162,7 @@ router.get("/:id", async (req, res) => {
     },
     attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']],
     })
-    avgRating= avgRating[0].toJSON().avgRating
+    avgRating = parseFloat(avgRating[0].toJSON().avgRating.toFixed(2))
 
     //-------------SpotImages
     const spotImage = await Image.findAll({
@@ -150,6 +172,8 @@ router.get("/:id", async (req, res) => {
 
     //-------------Owner
     const owner = await User.findByPk(spot.ownerId)
+
+    spot.previewImage = spotImage[0].url
     spot.numReviews = numReviews
     spot.avgRating = avgRating
     spot.SpotImages = spotImage
@@ -239,7 +263,9 @@ router.post("/:id/images", requireAuth, async (req, res) => {
     })
 
     await image.save()
-    res.status(200).json({spot: image})
+    image.url = url
+    image.preview = preview
+    res.status(200).json({url, preview})
 })
 
 //create a Review based on a Spot id---------------------------
@@ -258,12 +284,10 @@ router.post("/:id/reviews", requireAuth, async (req, res) => {
     const reviews = await Review.findAll({
         where: {userId: user.id}
     })
-    // console.log('THIS IS REVIEWS', )
+
     let userReview = false
     reviews.forEach(review => {
-        console.log('userReview --> ',userReview)
         let reviewJson = review.toJSON()
-        console.log("Spot id -->", reviewJson.spotId)
         if (reviewJson.spotId == spot.id){
             userReview = true
         }
