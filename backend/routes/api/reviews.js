@@ -19,8 +19,8 @@ router.get('/current', requireAuth, async (req, res) => {
         include: [
             {model: User,
                 attributes: ['id','firstName','lastName']
-            },
-            {model: Spot,
+            }, {
+                model: Spot,
                 attributes: [
                     "id",
                     'ownerId',
@@ -34,14 +34,13 @@ router.get('/current', requireAuth, async (req, res) => {
                     "price",
                     'previewImage'
                 ]
-            },
-            {model: Image,
+            }, {
+                model: Image,
                 attributes: ['id', 'url']
             }
         ]
     })
     res.status(200).json({Reviews: currentUserReviews})
-
 });
 
 // create Image for a Review
@@ -78,7 +77,7 @@ router.post("/:id/images", requireAuth, async (req, res) => {
         })
     } else {
         const newReviewImage = await spot.createImage({
-            url, spotId: review.spotId, reviewId: +req.params.id
+            url, reviewId: +req.params.id
         })
         let id = newReviewImage.id
         newReviewImage.url = url

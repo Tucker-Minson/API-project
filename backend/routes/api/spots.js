@@ -7,6 +7,7 @@ const { Spot, User, Image, Review, Booking} = require("../../db/models");
 const sequelize = require('sequelize')
 const Op = sequelize.Op
 const router = express.Router();
+
 //-------------for date Range ---------------
 const Moment = require('moment');
 const MomentRange = require('moment-range');
@@ -38,13 +39,6 @@ const spotCheck = (req, res, next) => {
     next()
 }
 
-
-//make this into a middle where so it will apply the avg stars in each endpoint
-//should work for:
-// get all spots,
-// get all spots by current user
-// get by spot id
-// const getAvg = (req, res, next) => {}
 
 //get all Spots----------------------------------------
 router.get("/", async (req, res) => {
@@ -132,12 +126,29 @@ router.get("/", async (req, res) => {
 //get all Spots for current User ----------------------
 router.get("/current", requireAuth, async (req, res) => {
     const { user } = req
-    const currentUserSpots = await Spot.findAll({
+    const spots = await Spot.findAll({
         where: {
             ownerId: user.id
-        }
+        }, include :{model: Review}
     })
-    res.status(200).json({"Spots": currentUserSpots})
+    let finalSpots = spots.map(spot => {
+        let reviews = spot.toJSON().Reviews
+        let starRatings = []
+        let reviewArr = []
+
+        reviews.forEach(review => {
+            let rating = review.stars
+            starRatings.push(rating)
+            reviewArr.push(reviews)
+        });
+        let sumRatings = starRatings.reduce((prevNum, currNum) => prevNum + currNum, 0)
+        let avgRating = parseFloat((sumRatings/starRatings.length).toFixed(2))
+        spot.avgRating = avgRating
+        let j = spot.toJSON()
+        delete j.Reviews
+        return j
+    });
+    res.status(200).json({"Spots": finalSpots})
 })
 //get details of a Spot from an id---------------------
 
@@ -187,10 +198,6 @@ router.get("/:id", async (req, res) => {
 router.get("/:id/reviews", async (req, res) => {
 
     let spot = await Spot.findByPk(req.params.id)
-    const reviews = await Review.findAll({
-        where: {spotId: spot.id},
-        include: {model: User, attributes: ['id','firstName','lastName']}
-    })
 
     if (!spot) {
         res.status(400).json({
@@ -198,6 +205,18 @@ router.get("/:id/reviews", async (req, res) => {
             statusCode: 404
         })
     }
+    
+    const reviews = await Review.findAll({
+        where: {spotId: spot.id},
+        include: [{
+            model: User, attributes: ['id','firstName','lastName']
+        }, {
+            model: Image,
+            attributes: ['id', 'url']
+        }]
+    })
+
+
     res.status(200).json({
         Reviews: reviews,
         // ReviewImages: reviewImages,
@@ -318,9 +337,7 @@ router.post("/:id/reviews", requireAuth, async (req, res) => {
             spotId, review, stars
         })
 
-        res.status(200).json({
-            reviewy
-        })
+        res.status(200).json(reviewy)
     }
 })
 
