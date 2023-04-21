@@ -15,7 +15,6 @@ module.exports = {
       },
       spotId: {
         type: Sequelize.INTEGER,
-        allowNull:false,
       },
       reviewId: {
         type: Sequelize.INTEGER,

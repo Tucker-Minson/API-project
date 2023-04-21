@@ -19,8 +19,8 @@ router.get('/current', requireAuth, async (req, res) => {
         include: [
             {model: User,
                 attributes: ['id','firstName','lastName']
-            },
-            {model: Spot,
+            }, {
+                model: Spot,
                 attributes: [
                     "id",
                     'ownerId',
@@ -34,14 +34,13 @@ router.get('/current', requireAuth, async (req, res) => {
                     "price",
                     'previewImage'
                 ]
-            },
-            {model: Image,
+            }, {
+                model: Image,
                 attributes: ['id', 'url']
             }
         ]
     })
     res.status(200).json({Reviews: currentUserReviews})
-
 });
 
 // create Image for a Review
@@ -64,7 +63,7 @@ router.post("/:id/images", requireAuth, async (req, res) => {
     const spot = await Spot.findByPk(review.spotId)
     const { url, preview } = req.body
     const prevImgsArr = await Image.findAll({
-        where: { spotId: spot.id }
+        where: { reviewId: review.id }
     })
 
     if (preview === true) {
@@ -78,7 +77,7 @@ router.post("/:id/images", requireAuth, async (req, res) => {
         })
     } else {
         const newReviewImage = await spot.createImage({
-            url, spotId: review.spotId, reviewId: +req.params.id
+            url, reviewId: +req.params.id
         })
         let id = newReviewImage.id
         newReviewImage.url = url
@@ -87,29 +86,27 @@ router.post("/:id/images", requireAuth, async (req, res) => {
     }
 });
 //Edit a Review-------------------------------------
-//errors not working properly> its an issue with line 54 & 55
 router.put('/:id', requireAuth, async (req, res, next) => {
     const reviews = await Review.findByPk(req.params.id)
-    const { user } = req
-    const { review, stars } = req.body;
-
-    if (!reviews.id) {
+    if (!reviews) {
         res.status(404).json({
             message: "Review couldn't be found",
             statusCode: 404
         })
     }
-
-    let errors = [];
-    reviews.review = review,
-    reviews.stars = stars
-
+    const { user } = req
     if (reviews.userId !== user.id) {
         res.json({
             message: "Validation error",
             statusCode: 400,
         })
     }
+    const { review, stars,  } = req.body;
+
+    let errors = [];
+    reviews.review = review,
+    reviews.stars = stars
+
     if(!req.body.review) errors.push("Review text is required")
     if(req.body.stars < 1 || req.body.stars > 5) errors.push("Stars must be an integer from 1 to 5")
     if (errors.length > 0) {
