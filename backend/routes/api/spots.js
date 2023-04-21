@@ -228,6 +228,7 @@ router.post("/", spotCheck, requireAuth, async (req, res) => {
 
 
 })
+//get all images
 router.get("/:id/images",  async (req, res) => {
     const images = await Image.findAll()
     res.status(200).json(images)
@@ -407,9 +408,9 @@ router.post("/:id/bookings", requireAuth,  async (req, res) => {
 
 
 
-//edit a Spot // WORKS---------------------------------------
+//edit a Spot
 router.put("/:id", spotCheck, requireAuth, async (req, res) => {
-    const { address, city, state, country, lat, lng, name, description, price} = req.body;
+    const { id, address, city, state, country, lat, lng, name, description, price} = req.body;
     let spot = await Spot.findByPk(req.params.id)
     const { user } = req
     if (spot.ownerId !== user.id) {
@@ -418,6 +419,7 @@ router.put("/:id", spotCheck, requireAuth, async (req, res) => {
             statusCode: 400,
         })
     }
+    spot.id = id,
     spot.address = address,
     spot.city = city,
     spot.state = state,
@@ -434,11 +436,9 @@ router.put("/:id", spotCheck, requireAuth, async (req, res) => {
         statusCode: 404
     })
     } else {
+        let updatedSpot = {id, ownerId:user.id, address, city, state, country, lat, lng, name, description, price}
         await spot.save()
-        res.status(200).json({
-            message: "This Spot successfully updated",
-            spot
-        })
+        res.status(200).json(updatedSpot)
     }
 })
 
