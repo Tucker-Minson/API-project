@@ -205,7 +205,7 @@ router.get("/:id/reviews", async (req, res) => {
             statusCode: 404
         })
     }
-    
+
     const reviews = await Review.findAll({
         where: {spotId: spot.id},
         include: [{
@@ -375,8 +375,6 @@ router.get('/:id/bookings', requireAuth, async (req, res) => {
 //create a Booking based on a Spot id---------------------------
 router.post("/:id/bookings", requireAuth,  async (req, res) => {
     let spot = await Spot.findByPk(req.params.id)
-    const {spotId, startDate, endDate} = req.body
-
 
     if (!spot) {
         res.status(200).json({
@@ -385,15 +383,10 @@ router.post("/:id/bookings", requireAuth,  async (req, res) => {
         })
     }
     const { user } = req
-    if (spot.ownerId === user.id) {
-        res.json({
-            message: "Cannot book own your own spot",
-            statusCode: 400,
-        })
-    }
+    const {spotId, startDate, endDate} = req.body
 
     let errors = [];
-    if (new Date(startDate) >= new Date(endDate) ) errors.push("endDate cannot be on or before startDate")
+    if (new Date(startDate) >= new Date(endDate)) errors.push("endDate cannot be on or before startDate")
 
     let thisDateRange = moment.range(startDate, endDate)
 
@@ -408,12 +401,20 @@ router.post("/:id/bookings", requireAuth,  async (req, res) => {
     bookingsActive.forEach(booking => {
         let range = moment.range(booking.startDate, booking.endDate)
         if (thisDateRange.overlaps(range)) {
+            let errs = [];
+            let start = moment(startDate)
+            let end = moment(endDate)
+            if(start.within(range)) errs.push("Start date conflicts with an existing booking")
+            if(end.within(range)) errs.push("End date conflicts with an existing booking")
+
             res.status(403).json({
                 message: "Sorry, this spot is already booked for the specified dates",
-                statusCode: 403
-        })
+                statusCode: 403,
+                errs
+            })
         }
     })
+
     const booking = await spot.createBooking({
         userId: user.id,
         spotId, startDate, endDate
