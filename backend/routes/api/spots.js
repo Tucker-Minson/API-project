@@ -94,10 +94,23 @@ router.get("/", async (req, res) => {
         const spots = await Spot.findAll({
             ...query,
             limit: size,
-            offset: (page - 1) * size
-
+            offset: (page - 1) * size,
+            include: {model: Review, requred: true,}
         })
 
+        //getting avgRating for each
+        let starRatings = []
+        spots.forEach(spot => {
+            let reviews = spot.toJSON().Reviews
+            reviews.forEach(review => {
+                let rating = review.stars
+                starRatings.push(rating)
+            });
+
+            let sumRatings = starRatings.reduce((prevNum, currNum) => prevNum + currNum, starRatings[0])
+            let avgRating = parseFloat((sumRatings/starRatings.length).toFixed(2))
+            spot.avgRating = avgRating
+        });
         return res.status(200).json({
             spots,
             page,
@@ -151,6 +164,7 @@ router.get("/:id", async (req, res) => {
 
     //-------------Owner
     const owner = await User.findByPk(spot.ownerId)
+
     spot.previewImage = spotImage[0].url
     spot.numReviews = numReviews
     spot.avgRating = avgRating
@@ -260,12 +274,10 @@ router.post("/:id/reviews", requireAuth, async (req, res) => {
     const reviews = await Review.findAll({
         where: {userId: user.id}
     })
-    // console.log('THIS IS REVIEWS', )
+
     let userReview = false
     reviews.forEach(review => {
-        console.log('userReview --> ',userReview)
         let reviewJson = review.toJSON()
-        console.log("Spot id -->", reviewJson.spotId)
         if (reviewJson.spotId == spot.id){
             userReview = true
         }
