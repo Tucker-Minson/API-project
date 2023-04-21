@@ -410,7 +410,7 @@ router.post("/:id/bookings", requireAuth,  async (req, res) => {
 
 //edit a Spot
 router.put("/:id", spotCheck, requireAuth, async (req, res) => {
-    const { id, address, city, state, country, lat, lng, name, description, price} = req.body;
+    const { id, address, city, state, country, lat, lng, name, description, price, createdAt, updatedAt} = req.body;
     let spot = await Spot.findByPk(req.params.id)
     const { user } = req
     if (spot.ownerId !== user.id) {
@@ -436,7 +436,7 @@ router.put("/:id", spotCheck, requireAuth, async (req, res) => {
         statusCode: 404
     })
     } else {
-        let updatedSpot = {id, ownerId:user.id, address, city, state, country, lat, lng, name, description, price}
+        let updatedSpot = {id, ownerId:user.id, address, city, state, country, lat, lng, name, description, price, createdAt, updatedAt}
         await spot.save()
         res.status(200).json(updatedSpot)
     }
