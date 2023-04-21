@@ -20,7 +20,10 @@ router.get('/current', requireAuth, async (req, res) => {
     const { user } = req;
     const currentUserBookings = await Booking.findAll({
         where: {userId: user.id},
-        include: {model: Spot}
+        include: {model: Spot, attributes: [
+            "id", "ownerId", "address", "city", "state", "country",
+            "lat", "lng", "name", "price", "previewImage"
+        ]},
     })
 
     res.status(200).json({
@@ -57,7 +60,7 @@ router.put('/:id', requireAuth ,async (req, res) => {
         res.status(400).json(err)
     }
     let thisDateRange = moment.range(startDate, endDate)
-    
+
     const bookingsActive = await Booking.findAll()
     bookingsActive.forEach(booking => {
         let range = moment.range(booking.startDate, booking.endDate)

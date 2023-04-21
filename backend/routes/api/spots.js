@@ -360,7 +360,7 @@ router.get('/:id/bookings', requireAuth, async (req, res) => {
             where: {spotId: spot.id},
             attributes: ['spotId', 'startDate', 'endDate']
         })
-        res.status(200).json(bookings)
+        res.status(200).json({Bookings: bookings})
     }
 
     if (spot.ownerId === user.id) {
@@ -368,7 +368,7 @@ router.get('/:id/bookings', requireAuth, async (req, res) => {
             where: {spotId: spot.id},
             include: {model: User, attributes: ['id','firstName','lastName']},
         })
-        res.status(200).json(bookings)
+        res.status(200).json({Bookings: bookings})
     }
 })
 
