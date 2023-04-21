@@ -63,7 +63,7 @@ router.post("/:id/images", requireAuth, async (req, res) => {
     const spot = await Spot.findByPk(review.spotId)
     const { url, preview } = req.body
     const prevImgsArr = await Image.findAll({
-        where: { spotId: spot.id }
+        where: { reviewId: review.id }
     })
 
     if (preview === true) {
@@ -86,7 +86,6 @@ router.post("/:id/images", requireAuth, async (req, res) => {
     }
 });
 //Edit a Review-------------------------------------
-//errors not working properly> its an issue with line 54 & 55
 router.put('/:id', requireAuth, async (req, res, next) => {
     const reviews = await Review.findByPk(req.params.id)
     const { user } = req
