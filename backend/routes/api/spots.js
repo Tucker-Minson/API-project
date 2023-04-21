@@ -37,6 +37,8 @@ const spotCheck = (req, res, next) => {
     }
     next()
 }
+
+
 //make this into a middle where so it will apply the avg stars in each endpoint
 //should work for:
 // get all spots,
@@ -100,7 +102,7 @@ router.get("/", async (req, res) => {
 
         //getting avgRating for each
         let starRatings = []
-        spots.forEach(spot => {
+        let finalSpots = spots.map(spot => {
             let reviews = spot.toJSON().Reviews
             reviews.forEach(review => {
                 let rating = review.stars
@@ -110,9 +112,13 @@ router.get("/", async (req, res) => {
             let sumRatings = starRatings.reduce((prevNum, currNum) => prevNum + currNum, starRatings[0])
             let avgRating = parseFloat((sumRatings/starRatings.length).toFixed(2))
             spot.avgRating = avgRating
+            let j = spot.toJSON()
+            delete j.Reviews
+            return j
         });
+
         return res.status(200).json({
-            spots,
+            spots: finalSpots,
             page,
             size
         })
