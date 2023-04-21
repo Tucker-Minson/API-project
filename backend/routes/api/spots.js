@@ -253,7 +253,7 @@ router.post("/:id/images", requireAuth, async (req, res) => {
         })
     }
 
-    const { url, preview } = req.body;
+    const {url, preview } = req.body;
 
     if (preview === true) {
         spot.previewImage = url
@@ -263,11 +263,11 @@ router.post("/:id/images", requireAuth, async (req, res) => {
     const image = await spot.createImage({
         url, preview
     })
-
+    image.toJSON().url = url
+    image.toJSON().preview = preview
+    let img = {id: image.id, url, preview }
     await image.save()
-    image.url = url
-    image.preview = preview
-    res.status(200).json({url, preview})
+    res.status(200).json(img)
 })
 
 //create a Review based on a Spot id---------------------------
