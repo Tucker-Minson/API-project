@@ -119,7 +119,6 @@ router.get("/", async (req, res) => {
             delete j.Reviews
             return j
         });
-        //previewImage
 
         return res.status(200).json({
             spots: finalSpots,
