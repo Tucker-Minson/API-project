@@ -97,11 +97,12 @@ router.get("/", async (req, res) => {
             ...query,
             limit: size,
             offset: (page - 1) * size,
-            include: {model: Review, requred: true,}
+            include: {model: Review}
         })
 
         //getting avgRating for each
         let starRatings = []
+
         let finalSpots = spots.map(spot => {
             let reviews = spot.toJSON().Reviews
             reviews.forEach(review => {
@@ -116,6 +117,7 @@ router.get("/", async (req, res) => {
             delete j.Reviews
             return j
         });
+        //previewImage
 
         return res.status(200).json({
             spots: finalSpots,
@@ -261,7 +263,9 @@ router.post("/:id/images", requireAuth, async (req, res) => {
     })
 
     await image.save()
-    res.status(200).json({spot: image})
+    image.url = url
+    image.preview = preview
+    res.status(200).json({url, preview})
 })
 
 //create a Review based on a Spot id---------------------------
