@@ -20,7 +20,10 @@ router.get('/current', requireAuth, async (req, res) => {
     const { user } = req;
     const currentUserBookings = await Booking.findAll({
         where: {userId: user.id},
-        include: {model: Spot}
+        include: {model: Spot, attributes: [
+            "id", "ownerId", "address", "city", "state", "country",
+            "lat", "lng", "name", "price", "previewImage"
+        ]},
     })
 
     res.status(200).json({
@@ -37,6 +40,7 @@ router.put('/:id', requireAuth ,async (req, res) => {
             statusCode: 404
         })
     }
+
     const {user} = req;
     let errors = [];
     const {startDate, endDate} = req.body
@@ -46,9 +50,8 @@ router.put('/:id', requireAuth ,async (req, res) => {
     let today = new Date()
 
     if (booking.userId !== user.id) errors.push('Invalid User')
-    if (checkStartDate >= booking.endDate) errors.push("End date cannot come before start date")
+    if (checkStartDate >= checkEndDate) errors.push("endDate cannot come before startDate")
     if (checkEndDate <= today) errors.push("Past bookings can't be modified")
-
 
     if (errors.length > 0) {
         const err = new Error('Validation error')
@@ -56,19 +59,36 @@ router.put('/:id', requireAuth ,async (req, res) => {
         err.errors = errors
         res.status(400).json(err)
     }
+
     let thisDateRange = moment.range(startDate, endDate)
-    
-    const bookingsActive = await Booking.findAll()
+
+    const bookingsActive = await Booking.findAll({
+        where: {spotId: booking.spotId}
+    })
+    let errs = [];
+
     bookingsActive.forEach(booking => {
         let range = moment.range(booking.startDate, booking.endDate)
         if (thisDateRange.overlaps(range)) {
-            res.status(403).json({
-                message: "Sorry, this spot is already booked for the specified dates",
-                statusCode: 403
-        })
+            let start = moment(startDate)
+            let end = moment(endDate)
+            if(start.within(range)) errs.push("Start date conflicts with an existing booking")
+            if(end.within(range)) errs.push("End date conflicts with an existing booking")
         }
     })
+    
+    if (errs.length) {
+        res.status(403).json({
+            message: "Sorry, this spot is already booked for the specified dates",
+            statusCode: 403,
+            errs
+        })
+    }
+    booking.startDate = startDate
+    booking.endDate = endDate
+
     await booking.save()
+
     res.status(200).json(booking)
 });
 
