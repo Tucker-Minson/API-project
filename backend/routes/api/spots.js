@@ -179,8 +179,8 @@ router.get("/:id", async (req, res) => {
         console.log('----averageRating------------>',avgRating)
         console.log('----avg[0]------------>',avgRating[0])
         console.log('-------[w/ .toJSON]--------->',avgRating[0].toJSON().avgRating)
-        
-        avgRating = parseFloat(avgRating[0].toJSON().avgRating.toFixed(2))
+
+        avgRating = parseFloat(avgRating[0].toJSON().avgRating).toFixed(2)
     }
     //-------------SpotImages
     const spotImage = await Image.findAll({
