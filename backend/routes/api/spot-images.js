@@ -9,13 +9,25 @@ const router = express.Router();
 
 //Delete a Spot Image
 router.delete("/:id", requireAuth, async(req, res) => {
-    const image = await Image.findByPk(req.params.id)
-
+    const image = await Image.findByPk(req.params.id,
+        {
+            include: {model:Spot}
+        })
     if (!image) {
         res.status(404).json({
             message: "Spot Image couldn't be found",
             statusCode: 404
         })
+        return
+    }
+    const { user } = req
+    console.log(image)
+    if (image.Spot.ownerId !== user.id) {
+        res.json({
+            message: "Validation error",
+            statusCode: 400,
+        })
+        return
     }
     await image.destroy()
     res.status(200).json({
