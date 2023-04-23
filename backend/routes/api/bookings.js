@@ -76,13 +76,14 @@ router.put('/:id', requireAuth ,async (req, res) => {
             if(end.within(range)) errs.push("End date conflicts with an existing booking")
         }
     })
-    
+
     if (errs.length) {
         res.status(403).json({
             message: "Sorry, this spot is already booked for the specified dates",
             statusCode: 403,
             errs
         })
+        return
     }
     booking.startDate = startDate
     booking.endDate = endDate

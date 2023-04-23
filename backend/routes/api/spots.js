@@ -400,31 +400,31 @@ router.post("/:id/bookings", requireAuth,  async (req, res) => {
     const bookingsActive = await Booking.findAll({
         where: {spotId: spot.id}
     })
+    let errs = [];
+
     bookingsActive.forEach(booking => {
         let range = moment.range(booking.startDate, booking.endDate)
         if (thisDateRange.overlaps(range)) {
-            let errs = [];
             let start = moment(startDate)
             let end = moment(endDate)
             if(start.within(range)) errs.push("Start date conflicts with an existing booking")
             if(end.within(range)) errs.push("End date conflicts with an existing booking")
-
-            res.status(403).json({
-                message: "Sorry, this spot is already booked for the specified dates",
-                statusCode: 403,
-                errs
-            })
         }
     })
+    if (errs.length) {
+        res.status(403).json({
+            message: "Sorry, this spot is already booked for the specified dates",
+            statusCode: 403,
+            errs
+        })
+        return;
+    }
 
     const booking = await spot.createBooking({
         userId: user.id,
         spotId, startDate, endDate
     })
-    res.status(200).json({
-        message: "The Booking was successful",
-        booking
-    })
+    res.status(200).json(booking)
 })
 
 
