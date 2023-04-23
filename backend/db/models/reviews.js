@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       Review.belongsTo(models.User, {foreignKey: "userId"})
       Review.belongsTo(models.Spot, {foreignKey: "spotId"})
 
-      Review.hasMany(models.Image, {foreignKey: "reviewId"})
+      Review.hasMany(models.Image, {foreignKey: "reviewId", onDelete: 'CASCADE'})
     }
   }
   Review.init({
@@ -26,6 +26,7 @@ module.exports = (sequelize, DataTypes) => {
     spotId: {
       type:DataTypes.INTEGER,
       allowNull: false,
+      onDelete: 'CASCADE'
 
     },
     review: {
