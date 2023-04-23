@@ -1,3 +1,10 @@
-need fix error in both 'create a booking based on Spot id' & 'edit booking'
-    - it checks all dates not just dates for specified spot.
-    - refer to avgRating structure in get all spots
+--get current user--
+    -need to include user firstname and lastname
+
+-- get Details of Spot by Id --
+    error message of :"avgRating[0].toJSON(...).avgRating.toFixed is not a function",
+
+-- Log in a User --
+successful response:
+    -- remove createdAt & updatedAt
+    --add token:"" column
