@@ -220,10 +220,8 @@ router.get("/:id/reviews", async (req, res) => {
         }]
     })
 
-
     res.status(200).json({
         Reviews: reviews,
-        // ReviewImages: reviewImages,
     })
 })
 
