@@ -179,13 +179,13 @@ router.get("/:id", async (req, res) => {
         })
         avgRating = parseFloat(avgRating[0].toJSON().avgRating.toFixed(2))
     }
+    //-------------SpotImages
     const spotImage = await Image.findAll({
         where: {spotId: spot.id},
         attributes: ['id', 'url', 'preview']
         })
 
 
-    //-------------SpotImages
 
     //-------------Owner
     const owner = await User.findByPk(spot.ownerId)
@@ -315,8 +315,6 @@ router.post("/:id/reviews", requireAuth, async (req, res) => {
             userReview = true
         }
     })
-
-
 
     let errors = [];
     if (!review) errors.push("Review text is required")
@@ -459,7 +457,9 @@ router.put("/:id", spotCheck, requireAuth, async (req, res) => {
     spot.description = description,
     spot.price = price
 
-        let updatedSpot = {id, ownerId: id, address, city, state, country, lat, lng, name, description, price, createdAt, updatedAt}
+        let updatedSpot = {id: spot.id, ownerId: user.id, address, city, state,
+            country, lat, lng, name, description, price, createdAt: spot.createdAt,
+            updatedAt:spot.updatedAt}
         await spot.save()
         res.status(200).json(updatedSpot)
 
