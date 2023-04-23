@@ -431,14 +431,15 @@ router.post("/:id/bookings", requireAuth,  async (req, res) => {
 
 //edit a Spot
 router.put("/:id", spotCheck, requireAuth, async (req, res) => {
-    const { id, address, city, state, country, lat, lng, name, description, price, createdAt, updatedAt} = req.body;
     let spot = await Spot.findByPk(req.params.id)
     if (!spot) {
         res.status(404).json({
             message: "Spot couldn't be found",
             statusCode: 404
         })
-    const { user } = req
+    }
+        const { id, address, city, state, country, lat, lng, name, description, price, createdAt, updatedAt} = req.body;
+        const { user } = req
     if (spot.ownerId !== user.id) {
         res.json({
             message: "Validation error",
@@ -456,12 +457,10 @@ router.put("/:id", spotCheck, requireAuth, async (req, res) => {
     spot.description = description,
     spot.price = price
 
-
-    } else {
-        let updatedSpot = {id, ownerId:user.id, address, city, state, country, lat, lng, name, description, price, createdAt, updatedAt}
+        let updatedSpot = {id, ownerId: id, address, city, state, country, lat, lng, name, description, price, createdAt, updatedAt}
         await spot.save()
         res.status(200).json(updatedSpot)
-    }
+
 })
 
 // delete a Spot
