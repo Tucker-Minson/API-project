@@ -100,12 +100,11 @@ router.put('/:id', requireAuth, async (req, res, next) => {
             message: "Validation error",
             statusCode: 400,
         })
+        return;
     }
     const { review, stars  } = req.body;
 
     let errors = [];
-    reviews.review = review,
-    reviews.stars = stars
 
     if(!req.body.review) errors.push("Review text is required")
     if(req.body.stars < 1 || req.body.stars > 5 || !stars) errors.push("Stars must be an integer from 1 to 5")
@@ -115,8 +114,9 @@ router.put('/:id', requireAuth, async (req, res, next) => {
         err.errors = errors
         return next(err)
     }
-    next()
 
+    reviews.review = review,
+    reviews.stars = stars
     await reviews.save()
     res.status(200).json(reviews)
 });
