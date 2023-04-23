@@ -169,7 +169,6 @@ router.get("/:id", async (req, res) => {
     let avgRating = null
 
     //avgRating
-    console.log(!reviews.length)
     if (reviews.length) {
         avgRating = await Review.findAll({
         where: {
@@ -177,6 +176,10 @@ router.get("/:id", async (req, res) => {
         },
         attributes: [[sequelize.fn('AVG', sequelize.col('stars')), 'avgRating']],
         })
+        console.log('----averageRating------------>',avgRating)
+        console.log('----avg[0]------------>',avgRating[0])
+        console.log('-------[w/ .toJSON]--------->',avgRating[0].toJSON().avgRating)
+        
         avgRating = parseFloat(avgRating[0].toJSON().avgRating.toFixed(2))
     }
     //-------------SpotImages
