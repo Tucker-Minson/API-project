@@ -244,8 +244,10 @@ router.post("/", spotCheck, requireAuth, async (req, res) => {
         description,
         price
     })
-
-            res.status(201).json(newSpot)
+    let spot = newSpot.toJSON()
+    delete spot.avgRating
+    delete spot.previewImage
+    res.status(201).json(spot)
 
 
 })
