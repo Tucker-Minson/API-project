@@ -13,7 +13,7 @@ router.delete("/:id", requireAuth, async(req, res) => {
         {
             include: {model:Spot}
         })
-    if (!image) {
+    if (!image || !image.Spot) {
         res.status(404).json({
             message: "Spot Image couldn't be found",
             statusCode: 404
@@ -21,7 +21,8 @@ router.delete("/:id", requireAuth, async(req, res) => {
         return
     }
     const { user } = req
-    console.log(image)
+    console.log(image.Spot)
+
     if (image.Spot.ownerId !== user.id) {
         res.json({
             message: "Validation error",

@@ -14,7 +14,7 @@ router.delete("/:id", requireAuth, async(req, res) => {
         {
             include: {model: Review}
         })
-    if (!image) {
+    if (!image || !image.Review) {
         res.status(404).json({
             message: "Review Image couldn't be found",
             statusCode: 404
