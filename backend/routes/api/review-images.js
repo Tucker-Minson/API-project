@@ -22,7 +22,6 @@ router.delete("/:id", requireAuth, async(req, res) => {
         return
     }
     const { user } = req
-    console.log(image)
     if (image.Review.userId !== user.id) {
         res.json({
             message: "Validation error",

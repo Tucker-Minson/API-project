@@ -109,7 +109,6 @@ router.delete('/:id', requireAuth, async (req, res) => {
             statusCode: 400,
         })
     }
-    console.log(booking)
     let startDate = Booking.startDate
     booking.startDate = new Date(startDate)
     if (startDate) {

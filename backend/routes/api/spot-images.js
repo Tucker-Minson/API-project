@@ -21,7 +21,6 @@ router.delete("/:id", requireAuth, async(req, res) => {
         return
     }
     const { user } = req
-    console.log(image.Spot)
 
     if (image.Spot.ownerId !== user.id) {
         res.json({
