@@ -24,6 +24,7 @@ function ProfileButton({ user }) {
             }
         };
 
+        console.log("useEffect Profile button -----", showMenu)
         document.addEventListener('click', closeMenu);
 
         return () => document.removeEventListener("click", closeMenu);
@@ -34,6 +35,7 @@ function ProfileButton({ user }) {
     const logout = (e) => {
         e.preventDefault();
         dispatch(sessionActions.logout());
+        console.log(showMenu)
         closeMenu();
     };
 
