@@ -6,7 +6,7 @@ import Navigation from "./components/Navigation";
 import { Route } from "react-router-dom";
 
 import AllSpots from "./components/AllSpots";
-
+import SpotDetails from "./components/AllSpots/OneSpot";
 function App() {
   const dispatch = useDispatch();
   const [isLoaded, setIsLoaded] = useState(false);
@@ -18,8 +18,11 @@ function App() {
     <>
       <Navigation isLoaded={isLoaded} />
       {isLoaded && <Switch>
-        <Route exact path="/spots" component={AllSpots}/>
-        </Switch>}
+        <Route exact path="/" component={AllSpots} />
+        <Route path="/spots/:id">
+          <SpotDetails />
+        </Route>
+      </Switch>}
     </>
   );
 }

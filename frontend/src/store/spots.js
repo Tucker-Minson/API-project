@@ -1,15 +1,19 @@
 
 export const RECEIVE_SPOTS = 'spots/RECEIVE_SPOTS';
+export const RECEIVE_SPOT = 'spots/RECEIVE_SPOT'
 
 export const receiveSpots = (spots) => ({
     type: RECEIVE_SPOTS,
     spots
 })
+export const receiveOneSpot = (id) => ({
+    type: RECEIVE_SPOT,
+    id
+})
 
 export const fetchSpots = () => async (dispatch) => {
     const res = await fetch('api/spots');
     const spots = await res.json();
-    console.log('----->',spots.spots)
     if (res.ok) {
         dispatch(receiveSpots(spots.spots));
     } else {
@@ -19,6 +23,17 @@ export const fetchSpots = () => async (dispatch) => {
 
 export const getAllSpots = state => {
     return state?.spots ? Object.values(state.spots) : []
+    //return slice of state need
+    //object.values
+    //inside component
+}
+
+export const getOneSpot = (spot) => async dispatch => {
+const res = await fetch(`/api/spots/${spot.id}`);
+if (res.ok) {
+    const data = await res.json();
+    dispatch(receiveOneSpot(data))
+}
 }
 
 const spotsReducer = (state = {}, action) => {
