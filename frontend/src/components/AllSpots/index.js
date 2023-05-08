@@ -18,6 +18,7 @@ const AllSpots = () => {
         <section>
             <h1>All Spots</h1>
             <ul>
+                <NavLink to={'/spots/new'}>Create New Spot</NavLink>
                 {spots.map(spot => (
                     <li key={spot.id}>
                         <NavLink to={`/spots/${spot.id}`}>
