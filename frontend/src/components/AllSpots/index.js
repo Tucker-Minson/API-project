@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { NavLink} from "react-router-dom";
 import { getAllSpots, fetchSpots } from "../../store/spots";
-import SpotDetails from "./OneSpot";
 import SpotCard from "./SpotCard";
 
 const AllSpots = () => {
@@ -16,9 +15,9 @@ const AllSpots = () => {
 
     return (
         <section>
+                <NavLink to={'/spots/new'}>Create New Spot</NavLink>
             <h1>All Spots</h1>
             <ul>
-                <NavLink to={'/spots/new'}>Create New Spot</NavLink>
                 {spots.map(spot => (
                     <li key={spot.id}>
                         <NavLink to={`/spots/${spot.id}`}>

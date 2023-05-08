@@ -1,6 +1,6 @@
 
-const LOAD_SPOTS = 'spots/RECEIVE_SPOTS';
-const ADD_SPOT = 'spots/RECEIVE_SPOT'
+const LOAD_SPOTS = 'spots/LOAD_SPOTS';
+const ADD_SPOT = 'spots/ADD_SPOT'
 //////////////////// Actions ///////////////////////////////
 export const receiveSpots = (spots) => ({
     type: LOAD_SPOTS,
