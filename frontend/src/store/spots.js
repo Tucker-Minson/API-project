@@ -44,8 +44,14 @@ export const createSpotForm = (payload) => async dispatch => {
     })
     if (res.ok) {
         const data = await res.json();
-        //const res2 --->
-        dispatch(addSpot(data))
+        payload.images.forEach(async image => {
+            const resImg = await csrfFetch(`/api/spots/${data.id}/images`, {
+                headers: {'Content-Type': 'application/json'},
+                method: "POST",
+                body: JSON.stringify(image)
+            })
+        })
+            dispatch(addSpot(data))
     }
 };
 ///////////////////// Reducer //////////////////////////////
