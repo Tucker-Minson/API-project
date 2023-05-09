@@ -1,19 +1,24 @@
-
+import { csrfFetch } from "./csrf";
 const LOAD_SPOTS = 'spots/LOAD_SPOTS';
+const LOAD_SPOT = 'spots/LOAD_SPOT'
 const ADD_SPOT = 'spots/ADD_SPOT'
 //////////////////// Actions ///////////////////////////////
 export const receiveSpots = (spots) => ({
     type: LOAD_SPOTS,
     spots
 })
-export const receiveOneSpot = (id) => ({
+export const receiveOneSpot = (spot) => ({
+    type: LOAD_SPOT,
+    spot
+})
+export const addSpot = (spot) => ({
     type: ADD_SPOT,
-    id
+    spot
 })
 
 //////////////////// Thunk ///////////////////////////////
 export const fetchSpots = () => async (dispatch) => {
-    const res = await fetch('api/spots');
+    const res = await csrfFetch('api/spots');
     const spots = await res.json();
     if (res.ok) {
         dispatch(receiveSpots(spots.spots));
@@ -22,15 +27,9 @@ export const fetchSpots = () => async (dispatch) => {
     }
 };
 
-export const getAllSpots = state => {
-    return state?.spots ? Object.values(state.spots) : []
-    //return slice of state need
-    //object.values
-    //inside component
-}
 
-export const getOneSpot = (spot) => async dispatch => {
-    const res = await fetch(`/api/spots/${spot.id}`);
+export const getOneSpot = (id) => async dispatch => {
+    const res = await csrfFetch(`/api/spots/${id}`);
     if (res.ok) {
         const data = await res.json();
         dispatch(receiveOneSpot(data))
@@ -38,14 +37,15 @@ export const getOneSpot = (spot) => async dispatch => {
 }
 
 export const createSpotForm = (payload) => async dispatch => {
-    const res = await fetch('api/spots', {
+    const res = await csrfFetch('api/spots', {
         headers: {'Content-Type': 'application/json'},
         method: "POST",
         body: JSON.stringify(payload)
     })
     if (res.ok) {
         const data = await res.json();
-        dispatch(receiveOneSpot(data))
+        //const res2 --->
+        dispatch(addSpot(data))
     }
 };
 ///////////////////// Reducer //////////////////////////////
@@ -58,6 +58,9 @@ const spotsReducer = (state = {}, action) => {
             }
             return newState
         };
+        case LOAD_SPOT: {
+            return { ...state, [action.spot.id]: action.spot}
+        }
         case ADD_SPOT: {
             if (!state[action.spot.id]) {
                 const newState = {

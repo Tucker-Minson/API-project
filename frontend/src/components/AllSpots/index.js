@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { NavLink} from "react-router-dom";
-import { getAllSpots, fetchSpots } from "../../store/spots";
+import { fetchSpots } from "../../store/spots";
 import SpotCard from "./SpotCard";
 
 const AllSpots = () => {
-    const spots = useSelector(getAllSpots);
+    const spots = Object.values(useSelector(state => state?.spots ? state.spots : {}));
 
     const dispatch = useDispatch();
 
     useEffect(() => {
         dispatch(fetchSpots());
     }, [dispatch]);
+
 
     return (
         <section>
